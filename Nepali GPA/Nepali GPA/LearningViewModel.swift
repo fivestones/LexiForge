@@ -270,12 +270,19 @@ class LearningViewModel: ObservableObject {
         let totalObjects = currentObjects.count
         let maxGrayOut = totalObjects - minVisibleObjects
         
-        // Create a list of objects to gray out excluding the target object
-        var objectsToGrayOut = currentObjects.filter { $0.name != targetObject.name }
-        objectsToGrayOut.shuffle() // Randomly shuffle the objects
-
-        // Select the first n objects to gray out
-        grayedOutObjects = Array(objectsToGrayOut.prefix(maxGrayOut))
+        // Create a list of objects to gray out excluding the target object and currently grayed out objects
+        let alreadyGrayedOutObjects = grayedOutObjects.filter { $0.name != targetObject.name }
+        var objectsToKeepVisible = currentObjects.filter { $0.name != targetObject.name && !grayedOutObjects.contains($0) }
+        
+        // Ensure there are enough objects to gray out
+        if objectsToKeepVisible.count > 1 {
+            objectsToKeepVisible.shuffle()
+            let secondVisibleObject = objectsToKeepVisible.first!
+            
+            grayedOutObjects = currentObjects.filter { $0.name != targetObject.name && $0.name != secondVisibleObject.name }
+        } else {
+            grayedOutObjects = currentObjects.filter { $0.name != targetObject.name }
+        }
     }
     
 }
