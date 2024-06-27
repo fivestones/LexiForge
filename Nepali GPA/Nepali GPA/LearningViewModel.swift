@@ -65,6 +65,7 @@ class LearningViewModel: ObservableObject {
                 targetWord = nil
                 recordInteraction(for: correctObject, type: .answeredCorrectly)
                 attempts = 0 // Reset attempts after a correct answer
+                //grayedOutObjects.removeAll() // Restore all objects
                 playSoundsSequentially(
                     sounds: ["sha_bas"],
                     type: "m4a",
@@ -88,8 +89,12 @@ class LearningViewModel: ObservableObject {
                     objects: [selectedObject, nil],
                     firstItemCompletion: { [weak self] in
                         // After playing the incorrect feedback audio, gray out objects if attempts > 3
-                        if let self = self, self.attempts > 3, self.grayedOutObjects.isEmpty {
-                            self.grayOutHalfObjects(except: correctObject)
+                        if let attempts = self?.attempts, attempts > 3 {
+                            if attempts == 4 {
+                                self?.grayOutHalfObjects(except: correctObject)
+                            } else if attempts == 6 {
+                                self?.grayOutAllButTwoObjects(except: correctObject)
+                            }
                         }
                     }
                 )
@@ -258,6 +263,21 @@ class LearningViewModel: ObservableObject {
         // Select the first n objects to gray out
         grayedOutObjects = Array(objectsToGrayOut.prefix(grayOutCount))
     }
+    
+    private func grayOutAllButTwoObjects(except targetObject: LearningObject) {
+        // Ensure at least 2 objects remain visible
+        let minVisibleObjects = 2
+        let totalObjects = currentObjects.count
+        let maxGrayOut = totalObjects - minVisibleObjects
+        
+        // Create a list of objects to gray out excluding the target object
+        var objectsToGrayOut = currentObjects.filter { $0.name != targetObject.name }
+        objectsToGrayOut.shuffle() // Randomly shuffle the objects
+
+        // Select the first n objects to gray out
+        grayedOutObjects = Array(objectsToGrayOut.prefix(maxGrayOut))
+    }
+    
 }
 
 var audioPlayer: AVAudioPlayer?
