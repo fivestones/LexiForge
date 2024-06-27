@@ -179,20 +179,52 @@ class LearningViewModel: ObservableObject {
         // Sort scores in descending order
         scores.sort(by: { $0.score > $1.score })
 
-        // Check if the top two scores are within one standard deviation of each other
-        if scores.count > 1, abs(scores[0].score - scores[1].score) <= standardDeviation {
-            let chosenObject = Bool.random() ? scores[0].object : scores[1].object
-            print("Choosing between top two objects within one standard deviation:")
-            print("Top object: \(scores[0].object.name), Score: \(scores[0].score)")
-            print("Second top object: \(scores[1].object.name), Score: \(scores[1].score)")
-            print("Standard Deviation: \(standardDeviation)")
-            return chosenObject
-        } else {
-            print("Choosing the top object:")
-            print("Top object: \(scores[0].object.name), Score: \(scores[0].score)")
-            print("Standard Deviation: \(standardDeviation)")
-            return scores[0].object
+        // Handle different selection scenarios
+        let topScore = scores[0].score
+        let topScoringObjects = scores.filter { $0.score == topScore }
+
+        // 1. If there's one top score with no other scores within one standard deviation, select the top score
+        if topScoringObjects.count == 1 {
+            let secondHighestScore = scores[1].score
+            if abs(topScore - secondHighestScore) > standardDeviation {
+                print("Choosing the top object without ties:")
+                print("Top object: \(scores[0].object.name), Score: \(scores[0].score)")
+                return scores[0].object
+            }
         }
+
+        // 2. If there are any number of tying top scores, select randomly from them
+        if topScoringObjects.count > 1 {
+            let chosenObject = topScoringObjects.randomElement()!.object
+            print("Choosing randomly among top tying objects:")
+            topScoringObjects.forEach { print("Object: \($0.object.name), Score: \($0.score)") }
+            return chosenObject
+        }
+
+        // 3. If there's one top score, but a second score within one standard deviation, select randomly between them
+        let secondHighestScore = scores[1].score
+        if abs(topScore - secondHighestScore) <= standardDeviation {
+            let secondScoringObjects = scores.filter { abs($0.score - topScore) <= standardDeviation }
+            let chosenObject = secondScoringObjects.randomElement()!.object
+            print("Choosing between top score and those within one standard deviation:")
+            secondScoringObjects.forEach { print("Object: \($0.object.name), Score: \($0.score)") }
+            return chosenObject
+        }
+
+        // 4. If there's one top score, but multiple scores tying for second within one standard deviation, select randomly among them
+        let secondScoringObjects = scores.filter { $0.score != topScore && abs($0.score - topScore) <= standardDeviation }
+        if secondScoringObjects.count > 1 {
+            let candidates = [scores[0]] + secondScoringObjects
+            let chosenObject = candidates.randomElement()!.object
+            print("Choosing between top object and second place ties within one standard deviation:")
+            candidates.forEach { print("Object: \($0.object.name), Score: \($0.score)") }
+            return chosenObject
+        }
+
+        // Default to choosing the top object
+        print("Choosing the top object by default:")
+        print("Top object: \(scores[0].object.name), Score: \(scores[0].score)")
+        return scores[0].object
     }
     
     func playSoundsSequentially(
