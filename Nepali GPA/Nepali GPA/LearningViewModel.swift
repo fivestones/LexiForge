@@ -248,14 +248,27 @@ class LearningViewModel: ObservableObject {
     
     private func grayOutHalfObjects(except targetObject: LearningObject) {
         // Ensure at least 3 objects remain visible
-        let minVisibleObjects = 3
+        var minVisibleObjects = 3
         let totalObjects = currentObjects.count
-        let numToGrayOut = totalObjects / 2
-        
-        // Ensure we don't gray out more than totalObjects - minVisibleObjects
+
+        // Determine the number of objects to gray out
+        let numToGrayOut: Int
+        if totalObjects == 3 {
+            numToGrayOut = 1 // Gray out 1 object, leaving 2 visible
+            minVisibleObjects = 2
+        } else {
+            numToGrayOut = totalObjects / 2
+            //numToGrayOut = max(totalObjects / 2, totalObjects - 3) // Gray out half, leaving a minimum of 3 visible
+        }
         let maxGrayOut = totalObjects - minVisibleObjects
         let grayOutCount = min(numToGrayOut, maxGrayOut)
         
+        // Ensure grayOutCount is not less than zero
+        guard grayOutCount > 0 else {
+            grayedOutObjects = []
+            return
+        }
+    
         // Create a list of objects to gray out excluding the target object
         var objectsToGrayOut = currentObjects.filter { $0.name != targetObject.name }
         objectsToGrayOut.shuffle() // Randomly shuffle the objects
