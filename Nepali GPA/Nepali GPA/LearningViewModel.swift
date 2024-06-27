@@ -74,18 +74,21 @@ class LearningViewModel: ObservableObject {
             } else {
                 print("Incorrect answer selected")
                 attempts += 1 // Increment the attempt counter
-                print("Number of attempts so far: \(attempts)")
-                if attempts > 3 {
-                    grayOutHalfObjects(except: correctObject)
-                }
                 currentPrompt = "होइन, त्यो \(selectedObject.nepaliName) हो। \(correctObject.nepaliName) कहाँ छ?"
                 recordInteraction(for: selectedObject, type: .answeredIncorrectly)
                 recordInteraction(for: correctObject, type: .objectNotKnown) // Record object not known for the correct object
                 targetWord = correctObject.nepaliName
+
                 playSoundsSequentially(
                     sounds: [selectedObject.negativeAudioFileName, correctObject.whereIsAudioFileName],
                     type: "m4a",
-                    objects: [selectedObject, nil]
+                    objects: [selectedObject, nil],
+                    firstItemCompletion: { [weak self] in
+                        // After playing the incorrect feedback audio, gray out objects if attempts > 3
+                        if self?.attempts ?? 0 > 3 {
+                            self?.grayOutHalfObjects(except: correctObject)
+                        }
+                    }
                 )
             }
         } else {
@@ -184,7 +187,12 @@ class LearningViewModel: ObservableObject {
         }
     }
     
-    func playSoundsSequentially(sounds: [String], type: String, objects: [LearningObject?] = []) {
+    func playSoundsSequentially(
+        sounds: [String],
+        type: String,
+        objects: [LearningObject?] = [],
+        firstItemCompletion: (() -> Void)? = nil
+    ) {
         continuePlaying = true
         var audioItems: [AVPlayerItem] = []
 
@@ -208,6 +216,14 @@ class LearningViewModel: ObservableObject {
                 } else {
                     self.highlightedObject = nil
                 }
+            }
+        }
+
+        // Add observer to call firstItemCompletion handler after the first item ends
+        if let firstItem = audioItems.first {
+            NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: firstItem, queue: .main) { _ in
+                firstItemCompletion?()
+                NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: firstItem)
             }
         }
 
