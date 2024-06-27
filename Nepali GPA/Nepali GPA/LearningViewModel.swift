@@ -17,11 +17,11 @@ class LearningViewModel: ObservableObject {
         LearningObject(name: "alligator", nepaliName: "गोही", imageName: "alligator", videoName: nil, thisIsAudioFileName: "this_is_a-alligator", negativeAudioFileName: "negative_response_alligator", whereIsAudioFileName: "where_is_alligator")
     ]
     @Published var currentObjects: [LearningObject] = []
-        @Published var currentPrompt: String = ""
-        @Published var highlightedObject: LearningObject?
-        @Published var targetWord: String?
-        @Published var attempts: Int = 0 // property for counting attempts
-        @Published var grayedOutObjects: [LearningObject] = []
+    @Published var currentPrompt: String = ""
+    @Published var highlightedObject: LearningObject?
+    @Published var targetWord: String?
+    @Published var attempts: Int = 0 // property for counting attempts
+    @Published var grayedOutObjects: [LearningObject] = []
 
         var currentAudioPlayer: AVAudioPlayer?
         var audioQueuePlayer: AVQueuePlayer?
@@ -64,12 +64,15 @@ class LearningViewModel: ObservableObject {
                 currentPrompt = "शाबास"
                 targetWord = nil
                 recordInteraction(for: correctObject, type: .answeredCorrectly)
-                attempts = 0 // Reset attempts after a correct answer (Only needed to restore all grayedOutObjects to normal immediately after a question is answered correctly--otherwise this is reset when a new question is asked.
-                grayedOutObjects.removeAll() // Restore all objects
+                attempts = 0 // Reset attempts after a correct answer
                 playSoundsSequentially(
                     sounds: ["sha_bas"],
                     type: "m4a",
-                    objects: []
+                    objects: [],
+                    firstItemCompletion: { [weak self] in
+                        // Restore all grayed out objects
+                        self?.grayedOutObjects.removeAll()
+                    }
                 )
             } else {
                 print("Incorrect answer selected")
@@ -85,8 +88,8 @@ class LearningViewModel: ObservableObject {
                     objects: [selectedObject, nil],
                     firstItemCompletion: { [weak self] in
                         // After playing the incorrect feedback audio, gray out objects if attempts > 3
-                        if self?.attempts ?? 0 > 3 {
-                            self?.grayOutHalfObjects(except: correctObject)
+                        if let self = self, self.attempts > 3, self.grayedOutObjects.isEmpty {
+                            self.grayOutHalfObjects(except: correctObject)
                         }
                     }
                 )
@@ -242,14 +245,18 @@ class LearningViewModel: ObservableObject {
         // Ensure at least 3 objects remain visible
         let minVisibleObjects = 3
         let totalObjects = currentObjects.count
-        let numToGrayOut = max(totalObjects / 2, totalObjects - minVisibleObjects)
+        let numToGrayOut = totalObjects / 2
+        
+        // Ensure we don't gray out more than totalObjects - minVisibleObjects
+        let maxGrayOut = totalObjects - minVisibleObjects
+        let grayOutCount = min(numToGrayOut, maxGrayOut)
         
         // Create a list of objects to gray out excluding the target object
         var objectsToGrayOut = currentObjects.filter { $0.name != targetObject.name }
         objectsToGrayOut.shuffle() // Randomly shuffle the objects
 
         // Select the first n objects to gray out
-        grayedOutObjects = Array(objectsToGrayOut.prefix(numToGrayOut))
+        grayedOutObjects = Array(objectsToGrayOut.prefix(grayOutCount))
     }
 }
 

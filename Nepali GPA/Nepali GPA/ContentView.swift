@@ -24,11 +24,15 @@ struct ContentView: View {
                             .opacity(viewModel.grayedOutObjects.contains(object) ? 0.2 : 1.0) // Gray out
                             .allowsHitTesting(!viewModel.grayedOutObjects.contains(object)) // Disable interaction
                             .onTapGesture {
-                                viewModel.checkAnswer(selectedObject: object)
+                                if !viewModel.grayedOutObjects.contains(object) {
+                                    viewModel.checkAnswer(selectedObject: object)
+                                }
                             }
                     } else if let imageName = object.imageName {
                         Button(action: {
-                            viewModel.checkAnswer(selectedObject: object)
+                            if !viewModel.grayedOutObjects.contains(object) {
+                                viewModel.checkAnswer(selectedObject: object)
+                            }
                         }) {
                             Image(imageName)
                                 .resizable()
@@ -41,8 +45,8 @@ struct ContentView: View {
                                 .scaleEffect(highlightedObject == object ? 1.1 : 1.0)
                                 .animation(.easeInOut, value: highlightedObject)
                                 .opacity(viewModel.grayedOutObjects.contains(object) ? 0.2 : 1.0) // Gray out
-                                .allowsHitTesting(!viewModel.grayedOutObjects.contains(object)) // Disable interaction
                         }
+                        .disabled(viewModel.grayedOutObjects.contains(object)) // Disable interaction
                     }
                 }
             }
