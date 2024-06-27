@@ -22,6 +22,7 @@ class LearningViewModel: ObservableObject {
     @Published var targetWord: String?
     @Published var attempts: Int = 0 // property for counting attempts
     @Published var grayedOutObjects: [LearningObject] = []
+    @Published var correctAnswerObjectWasSelected: LearningObject? // Flag to track the correct answer
 
         var currentAudioPlayer: AVAudioPlayer?
         var audioQueuePlayer: AVQueuePlayer?
@@ -65,7 +66,7 @@ class LearningViewModel: ObservableObject {
                 targetWord = nil
                 recordInteraction(for: correctObject, type: .answeredCorrectly)
                 attempts = 0 // Reset attempts after a correct answer
-                //grayedOutObjects.removeAll() // Restore all objects
+                correctAnswerObjectWasSelected = correctObject // Set the correct answer object
                 playSoundsSequentially(
                     sounds: ["sha_bas"],
                     type: "m4a",
@@ -73,6 +74,7 @@ class LearningViewModel: ObservableObject {
                     firstItemCompletion: { [weak self] in
                         // Restore all grayed out objects
                         self?.grayedOutObjects.removeAll()
+                        self?.correctAnswerObjectWasSelected = nil // Reset the correct answer object after playback
                     }
                 )
             } else {

@@ -19,8 +19,11 @@ struct ContentView: View {
                             .cornerRadius(12)
                             .shadow(color: .gray, radius: 4, x: 2, y: 2)
                             .border(Color.red, width: highlightedObject == object ? 4 : 0)
+                            .border(Color.green, width: viewModel.correctAnswerObjectWasSelected == object ? 4 : 0) // Green border for correct answer
                             .scaleEffect(highlightedObject == object ? 1.1 : 1.0)
+                            .scaleEffect(viewModel.correctAnswerObjectWasSelected == object ? 1.1 : 1.0)
                             .animation(.easeInOut, value: highlightedObject)
+                            .animation(.easeInOut, value: viewModel.correctAnswerObjectWasSelected)
                             .opacity(viewModel.grayedOutObjects.contains(object) ? 0.2 : 1.0) // Gray out
                             .allowsHitTesting(!viewModel.grayedOutObjects.contains(object)) // Disable interaction
                             .onTapGesture {
@@ -42,8 +45,11 @@ struct ContentView: View {
                                 .cornerRadius(12)
                                 .shadow(color: .gray, radius: 4, x: 2, y: 2)
                                 .border(Color.red, width: highlightedObject == object ? 4 : 0)
+                                .border(Color.green, width: viewModel.correctAnswerObjectWasSelected == object ? 4 : 0) // Green border for correct answer
                                 .scaleEffect(highlightedObject == object ? 1.1 : 1.0)
+                                .scaleEffect(viewModel.correctAnswerObjectWasSelected == object ? 1.1 : 1.0)
                                 .animation(.easeInOut, value: highlightedObject)
+                                .animation(.easeInOut, value: viewModel.correctAnswerObjectWasSelected)
                                 .opacity(viewModel.grayedOutObjects.contains(object) ? 0.2 : 1.0) // Gray out
                         }
                         .disabled(viewModel.grayedOutObjects.contains(object)) // Disable interaction
