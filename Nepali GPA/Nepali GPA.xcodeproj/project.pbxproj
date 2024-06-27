@@ -70,7 +70,6 @@
 		639ED96C2C25E3E500FA666C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 639ED96B2C25E3E500FA666C /* Assets.xcassets */; };
 		639ED96F2C25E3E500FA666C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 639ED96E2C25E3E500FA666C /* Preview Assets.xcassets */; };
 		639ED9762C26CE0A00FA666C /* LearningViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 639ED9752C26CE0A00FA666C /* LearningViewModel.swift */; };
-		639ED9782C26CE2300FA666C /* oldLearningObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 639ED9772C26CE2300FA666C /* oldLearningObject.swift */; };
 		639ED97A2C26CE4D00FA666C /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 639ED9792C26CE4D00FA666C /* VideoPlayerView.swift */; };
 /* End PBXBuildFile section */
 
@@ -139,7 +138,6 @@
 		639ED96B2C25E3E500FA666C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		639ED96E2C25E3E500FA666C /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		639ED9752C26CE0A00FA666C /* LearningViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearningViewModel.swift; sourceTree = "<group>"; };
-		639ED9772C26CE2300FA666C /* oldLearningObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = oldLearningObject.swift; sourceTree = "<group>"; };
 		639ED9792C26CE4D00FA666C /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -239,7 +237,6 @@
 			children = (
 				639ED9752C26CE0A00FA666C /* LearningViewModel.swift */,
 				637238352C2A6F150004C0C1 /* LearningObject.swift */,
-				639ED9772C26CE2300FA666C /* oldLearningObject.swift */,
 				639ED9672C25E3E300FA666C /* Nepali_GPAApp.swift */,
 				639ED9692C25E3E300FA666C /* ContentView.swift */,
 				639ED96B2C25E3E500FA666C /* Assets.xcassets */,
@@ -388,7 +385,6 @@
 				637238362C2A6F150004C0C1 /* LearningObject.swift in Sources */,
 				639ED9762C26CE0A00FA666C /* LearningViewModel.swift in Sources */,
 				639ED96A2C25E3E300FA666C /* ContentView.swift in Sources */,
-				639ED9782C26CE2300FA666C /* oldLearningObject.swift in Sources */,
 				639ED9682C25E3E300FA666C /* Nepali_GPAApp.swift in Sources */,
 				639ED97A2C26CE4D00FA666C /* VideoPlayerView.swift in Sources */,
 			);

@@ -17,14 +17,15 @@ class LearningViewModel: ObservableObject {
         LearningObject(name: "alligator", nepaliName: "गोही", imageName: "alligator", videoName: nil, thisIsAudioFileName: "this_is_a-alligator", negativeAudioFileName: "negative_response_alligator", whereIsAudioFileName: "where_is_alligator")
     ]
     @Published var currentObjects: [LearningObject] = []
-    @Published var currentPrompt: String = ""
-    @Published var highlightedObject: LearningObject?
-    @Published var targetWord: String?
-    @Published var attempts: Int = 0 // property for counting attempts
+        @Published var currentPrompt: String = ""
+        @Published var highlightedObject: LearningObject?
+        @Published var targetWord: String?
+        @Published var attempts: Int = 0 // property for counting attempts
+        @Published var grayedOutObjects: [LearningObject] = []
 
-    var currentAudioPlayer: AVAudioPlayer?
-    var audioQueuePlayer: AVQueuePlayer?
-    var continuePlaying = true
+        var currentAudioPlayer: AVAudioPlayer?
+        var audioQueuePlayer: AVQueuePlayer?
+        var continuePlaying = true
 
     func introduceNextObject() {
         stopCurrentAudio()
@@ -63,6 +64,8 @@ class LearningViewModel: ObservableObject {
                 currentPrompt = "शाबास"
                 targetWord = nil
                 recordInteraction(for: correctObject, type: .answeredCorrectly)
+                attempts = 0 // Reset attempts after a correct answer (Only needed to restore all grayedOutObjects to normal immediately after a question is answered correctly--otherwise this is reset when a new question is asked.
+                grayedOutObjects.removeAll() // Restore all objects
                 playSoundsSequentially(
                     sounds: ["sha_bas"],
                     type: "m4a",
@@ -72,6 +75,9 @@ class LearningViewModel: ObservableObject {
                 print("Incorrect answer selected")
                 attempts += 1 // Increment the attempt counter
                 print("Number of attempts so far: \(attempts)")
+                if attempts > 3 {
+                    grayOutHalfObjects(except: correctObject)
+                }
                 currentPrompt = "होइन, त्यो \(selectedObject.nepaliName) हो। \(correctObject.nepaliName) कहाँ छ?"
                 recordInteraction(for: selectedObject, type: .answeredIncorrectly)
                 recordInteraction(for: correctObject, type: .objectNotKnown) // Record object not known for the correct object
@@ -214,6 +220,20 @@ class LearningViewModel: ObservableObject {
         audioQueuePlayer = nil
         currentAudioPlayer?.stop()
         currentAudioPlayer = nil
+    }
+    
+    private func grayOutHalfObjects(except targetObject: LearningObject) {
+        // Ensure at least 3 objects remain visible
+        let minVisibleObjects = 3
+        let totalObjects = currentObjects.count
+        let numToGrayOut = max(totalObjects / 2, totalObjects - minVisibleObjects)
+        
+        // Create a list of objects to gray out excluding the target object
+        var objectsToGrayOut = currentObjects.filter { $0.name != targetObject.name }
+        objectsToGrayOut.shuffle() // Randomly shuffle the objects
+
+        // Select the first n objects to gray out
+        grayedOutObjects = Array(objectsToGrayOut.prefix(numToGrayOut))
     }
 }
 

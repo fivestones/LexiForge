@@ -21,6 +21,8 @@ struct ContentView: View {
                             .border(Color.red, width: highlightedObject == object ? 4 : 0)
                             .scaleEffect(highlightedObject == object ? 1.1 : 1.0)
                             .animation(.easeInOut, value: highlightedObject)
+                            .opacity(viewModel.grayedOutObjects.contains(object) ? 0.2 : 1.0) // Gray out
+                            .allowsHitTesting(!viewModel.grayedOutObjects.contains(object)) // Disable interaction
                             .onTapGesture {
                                 viewModel.checkAnswer(selectedObject: object)
                             }
@@ -38,6 +40,8 @@ struct ContentView: View {
                                 .border(Color.red, width: highlightedObject == object ? 4 : 0)
                                 .scaleEffect(highlightedObject == object ? 1.1 : 1.0)
                                 .animation(.easeInOut, value: highlightedObject)
+                                .opacity(viewModel.grayedOutObjects.contains(object) ? 0.2 : 1.0) // Gray out
+                                .allowsHitTesting(!viewModel.grayedOutObjects.contains(object)) // Disable interaction
                         }
                     }
                 }
