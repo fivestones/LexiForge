@@ -5,8 +5,6 @@ struct ContentView: View {
     @State private var highlightedObject: LearningObject?
     @State private var itemSize: CGFloat = 0
     
-    let portraitColumns: Int = UIDevice.current.userInterfaceIdiom == .pad ? 4 : 3
-    
     var body: some View {
         GeometryReader { geometry in
             ScrollView {
@@ -15,14 +13,14 @@ struct ContentView: View {
                         .font(.title)
                         .padding()
                     
-                    let columns = calculateColumns(for: geometry.size)
+                    let layout = calculateLayout(for: geometry.size, objectCount: viewModel.currentObjects.count)
                     
-                    LazyVGrid(columns: columns, spacing: 16) {
+                    LazyVGrid(columns: layout.columns, spacing: layout.verticalSpacing) {
                         ForEach(viewModel.currentObjects, id: \.name) { object in
                             objectView(for: object)
                         }
                     }
-                    .padding()
+                    .padding(.horizontal, layout.horizontalPadding)
                     
                     Spacer()
                     
@@ -42,22 +40,56 @@ struct ContentView: View {
             highlightedObject = object
         }
         .onAppear {
-            let screen = UIScreen.main.bounds
-            let portraitWidth = min(screen.width, screen.height)
-            itemSize = calculateItemSize(for: portraitWidth)
+            itemSize = calculateItemSize()
         }
     }
     
-    func calculateItemSize(for width: CGFloat) -> CGFloat {
-        let horizontalPadding: CGFloat = 32 // Adjust this value based on your layout
-        let spacing: CGFloat = 16 * CGFloat(portraitColumns - 1)
-        let availableWidth = width - horizontalPadding - spacing
-        return availableWidth / CGFloat(portraitColumns)
+    func calculateItemSize() -> CGFloat {
+        let screen = UIScreen.main.bounds
+        let portraitWidth = min(screen.width, screen.height)
+        let isIPad = UIDevice.current.userInterfaceIdiom == .pad
+        let baseColumnCount = isIPad ? 4 : 3
+        let horizontalPadding: CGFloat = 32
+        let spacing: CGFloat = 16 * CGFloat(baseColumnCount - 1)
+        let availableWidth = portraitWidth - horizontalPadding - spacing
+        return availableWidth / CGFloat(baseColumnCount)
     }
     
-    func calculateColumns(for size: CGSize) -> [GridItem] {
-        let columnCount = Int(size.width / (itemSize + 16))
-        return Array(repeating: GridItem(.fixed(itemSize), spacing: 16), count: max(portraitColumns, columnCount))
+    func calculateLayout(for size: CGSize, objectCount: Int) -> (columns: [GridItem], verticalSpacing: CGFloat, horizontalPadding: CGFloat) {
+        let isIPad = UIDevice.current.userInterfaceIdiom == .pad
+        let isLandscape = size.width > size.height
+        
+        var columnCount: Int
+        var horizontalSpacing: CGFloat
+        var verticalSpacing: CGFloat
+        
+        if isIPad {
+            if isLandscape {
+                columnCount = 4
+                horizontalSpacing = 16
+                verticalSpacing = 16
+            } else {
+                columnCount = objectCount > 12 ? 4 : 3
+                if columnCount == 3 {
+                    // Increase spacing for 3-column layout on iPad
+                    let availableSpace = size.width - (itemSize * 3)
+                    horizontalSpacing = availableSpace / 4  // Divide by 4 to get spacing between and on sides
+                    verticalSpacing = horizontalSpacing
+                } else {
+                    horizontalSpacing = 16
+                    verticalSpacing = 16
+                }
+            }
+        } else {
+            columnCount = isLandscape ? 6 : 3
+            horizontalSpacing = 8
+            verticalSpacing = 16
+        }
+        
+        let columns = Array(repeating: GridItem(.fixed(itemSize), spacing: horizontalSpacing), count: columnCount)
+        let horizontalPadding = horizontalSpacing
+        
+        return (columns, verticalSpacing, horizontalPadding)
     }
     
     @ViewBuilder
@@ -92,11 +124,5 @@ struct ContentView: View {
             }
         }
         .allowsHitTesting(!viewModel.grayedOutObjects.contains(object))
-    }
-}
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
     }
 }
