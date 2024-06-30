@@ -206,8 +206,7 @@ struct ControlBar: View {
     @ObservedObject var viewModel: LearningViewModel
     
     var body: some View {
-        HStack {
-            Spacer()
+        HStack(spacing: 0) {
             Button(action: {
                 // Action for first button
                 viewModel.introduceNextObject()
@@ -215,9 +214,9 @@ struct ControlBar: View {
                 Image(systemName: "plus.diamond")
                     .font(.system(size: 24))
                     .foregroundColor(.white)
-                    .padding()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.blue)
             }
-            Spacer()
             Button(action: {
                 // Action for second button
                 viewModel.askQuestion()
@@ -225,9 +224,9 @@ struct ControlBar: View {
                 Image(systemName: "questionmark.bubble")
                     .font(.system(size: 24))
                     .foregroundColor(.white)
-                    .padding()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.green)
             }
-            Spacer()
             Button(action: {
                 // Action for third button
                 
@@ -235,12 +234,12 @@ struct ControlBar: View {
                 Image(systemName: "restart.circle.fill")
                     .font(.system(size: 24))
                     .foregroundColor(.white)
-                    .padding()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.red)
             }
             .disabled(true)
-            Spacer()
         }
-        .padding(.vertical, 10)
+        .frame(height: 50) // Adjust the height as needed
         .background(Color.gray)
     }
 }

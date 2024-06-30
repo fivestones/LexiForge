@@ -188,6 +188,7 @@ class LearningViewModel: ObservableObject {
 
         // 1. If there's one top score with no other scores within one standard deviation, select the top score
         if topScoringObjects.count == 1 {
+            if scores.count < 2 {return scores[0].object}
             let secondHighestScore = scores[1].score
             if abs(topScore - secondHighestScore) > standardDeviation {
                 print("Choosing the top object without ties:")
