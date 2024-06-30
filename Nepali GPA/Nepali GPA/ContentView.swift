@@ -1,40 +1,4 @@
 import SwiftUI
-import Combine
-
-class DeviceOrientationManager: ObservableObject { // This whole class is a bunch of malarky to make the app work upside down on an iphone.
-    @Published var isPortraitUpsideDown: Bool = false
-
-    private var orientationDidChangeNotification: AnyCancellable?
-
-    init() {
-        self.isPortraitUpsideDown = UIDevice.current.orientation == .portraitUpsideDown && UIDevice.current.userInterfaceIdiom == .phone
-
-        orientationDidChangeNotification = NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)
-            .sink { [weak self] _ in
-                if UIDevice.current.userInterfaceIdiom == .phone {
-                    if UIDevice.current.orientation == .portraitUpsideDown {
-                        self?.isPortraitUpsideDown = true
-                        self?.forcePortraitMode()
-                    } else {
-                        self?.isPortraitUpsideDown = false
-                    }
-                }
-            }
-    }
-
-    private func forcePortraitMode() {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
-        windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in
-            if let error = error as? NSError {
-                print("Failed to request geometry update: \(error.localizedDescription)")
-            }
-        }
-    }
-
-    deinit {
-        orientationDidChangeNotification?.cancel()
-    }
-}
 
 struct ContentView: View {
     @StateObject var viewModel = LearningViewModel()
@@ -43,7 +7,6 @@ struct ContentView: View {
     @State private var columns: Int = 1
     @State private var verticalSpacing: CGFloat = 0
     @State private var horizontalSpacing: CGFloat = 0
-    @State private var orientation = UIDeviceOrientation.unknown
 
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.verticalSizeClass) var verticalSizeClass
@@ -53,9 +16,10 @@ struct ContentView: View {
             ZStack {
                 ScrollView {
                     VStack {
-                        Text(viewModel.currentPrompt)
-                            .font(.title)
-                            .padding()
+                        StatusBar(viewModel: viewModel)
+                        
+                        Spacer()
+                            .frame(height: 40)
 
                         // Create the grid layout with the calculated number of columns
                         let gridItems = Array(repeating: GridItem(.fixed(itemSize), spacing: horizontalSpacing), count: columns)
@@ -83,15 +47,13 @@ struct ContentView: View {
             .onAppear {
                 // Use screen dimensions for initial layout calculation
                 updateLayout(for: geometry.size)
-                orientation = UIDevice.current.orientation
             }
             .onChange(of: geometry.size) { newSize in
                 // Recalculate layout when size changes (orientation change)
                 updateLayout(for: newSize)
             }
-            .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
-                orientation = UIDevice.current.orientation
-                updateLayout(for: geometry.size)
+            .onReceive(viewModel.$highlightedObject) { object in
+                highlightedObject = object
             }
         }
     }
@@ -109,8 +71,17 @@ struct ContentView: View {
         let availableWidth = size.width// - 64 // Subtract horizontal padding
         let availableHeight = size.height - 70 - 60 //- 64 // Subtract button height, text height, and vertical padding
 
-        horizontalSpacing = columns > 1 ? max((availableWidth - (CGFloat(columns) * itemSize)) / CGFloat(columns + 1), 0) : 0
-        verticalSpacing = rows > 1 ? max((availableHeight - (CGFloat(rows) * itemSize)) / CGFloat(rows + 1), 0) : 0
+        if columns > 1 {
+            horizontalSpacing = max((availableWidth - (CGFloat(columns) * itemSize)) / CGFloat(columns + 1), 0)
+        } else {
+            horizontalSpacing = 0
+        }
+
+        if rows > 1 {
+            verticalSpacing = max((availableHeight - (CGFloat(rows) * itemSize)) / CGFloat(rows + 1), 0) // I changed to + 1 in CGFloat(rows + 1) instead of - 1 to account for padding at the edges.
+        } else {
+            verticalSpacing = 0
+        }
     }
 
     // Unified calculateOptimalLayout function to take CGSize
@@ -184,6 +155,8 @@ struct ContentView: View {
                 .stroke(highlightedObject == object ? Color.red : (viewModel.correctAnswerObjectWasSelected == object ? Color.green : Color.clear), lineWidth: 4)
         )
         .scaleEffect(highlightedObject == object || viewModel.correctAnswerObjectWasSelected == object ? 1.1 : 1.0)
+//        .animation(.easeInOut(duration: 0.3), value: highlightedObject)
+//        .animation(.easeInOut(duration: 0.3), value: viewModel.correctAnswerObjectWasSelected)
         .animation(.easeInOut, value: highlightedObject)
         .animation(.easeInOut, value: viewModel.correctAnswerObjectWasSelected)
         .opacity(viewModel.grayedOutObjects.contains(object) ? 0.2 : 1.0)
@@ -196,49 +169,104 @@ struct ContentView: View {
     }
 }
 
-struct ControlBar: View {
+struct StatusBar: View {
     @ObservedObject var viewModel: LearningViewModel
-
+    
     var body: some View {
-        HStack {
-            Button("अर्को वस्तु प्रस्तुत गर्नुहोस्") {
-                viewModel.introduceNextObject()
+        ZStack{
+            HStack{
+                //left side of the StatusBar
+                Spacer()
             }
-            .padding()
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(10)
-
-            Button("प्रश्न सोध्नुहोस्") {
-                viewModel.askQuestion()
-            }
-            .padding()
-            .background(Color.green)
-            .foregroundColor(.white)
-            .cornerRadius(10)
             
-            Button("Force landscape") {
-                guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
-                windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait))
+            HStack{
+                //Center of the StatusBar
+                Text(viewModel.currentPrompt)
+                .font(.title)
+                .foregroundColor(.white)
             }
 
+            HStack{
+                //Right side of the StatusBar
+                Spacer()
+                Text("You can do it!")
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding(.trailing)
+            }
+            
         }
-        .padding(.horizontal)
-        .padding(.bottom, UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0) // Safe area inset for bottom
+        .padding()
+        .background(Color.blue)
+        .frame(height: 40) // Adjust height as needed
     }
 }
 
+//struct ControlBar: View {
+//    @ObservedObject var viewModel: LearningViewModel
+//
+//    var body: some View {
+//        HStack {
+//            Button("अर्को वस्तु प्रस्तुत गर्नुहोस्") {
+//                viewModel.introduceNextObject()
+//            }
+//            .padding()
+//            .background(Color.blue)
+//            .foregroundColor(.white)
+//            .cornerRadius(10)
+//
+//            Button("प्रश्न सोध्नुहोस्") {
+//                viewModel.askQuestion()
+//            }
+//            .padding()
+//            .background(Color.green)
+//            .foregroundColor(.white)
+//            .cornerRadius(10)
+//        }
+//        .padding(.horizontal)
+//        .padding(.bottom, UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0) // Safe area inset for bottom
+//    }
+//}
 
-struct RotatingView<Content: View>: View {
-    @StateObject private var orientationManager = DeviceOrientationManager()
-    let content: Content
-
-    init(@ViewBuilder content: () -> Content) {
-        self.content = content()
-    }
-
+struct ControlBar: View {
+    @ObservedObject var viewModel: LearningViewModel
+    
     var body: some View {
-        content
-            .rotationEffect(orientationManager.isPortraitUpsideDown ? .degrees(180) : .degrees(0))
+        HStack {
+            Spacer()
+            Button(action: {
+                // Action for first button
+                viewModel.introduceNextObject()
+            }) {
+                Image(systemName: "plus.diamond")
+                    .font(.system(size: 24))
+                    .foregroundColor(.white)
+                    .padding()
+            }
+            Spacer()
+            Button(action: {
+                // Action for second button
+                viewModel.askQuestion()
+            }) {
+                Image(systemName: "questionmark.bubble")
+                    .font(.system(size: 24))
+                    .foregroundColor(.white)
+                    .padding()
+            }
+            Spacer()
+            Button(action: {
+                // Action for third button
+                
+            }) {
+                Image(systemName: "restart.circle.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(.white)
+                    .padding()
+            }
+            .disabled(true)
+            Spacer()
+        }
+        .padding(.vertical, 10)
+        .background(Color.gray)
     }
 }

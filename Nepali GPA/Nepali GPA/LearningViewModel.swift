@@ -15,18 +15,7 @@ class LearningViewModel: ObservableObject {
         LearningObject(name: "pig", nepaliName: "सुँगुर", imageName: "pig", videoName: nil, thisIsAudioFileName: "this_is_a-pig", negativeAudioFileName: "negative_response_pig", whereIsAudioFileName: "where_is_pig"),
         LearningObject(name: "deer", nepaliName: "हिरण", imageName: "deer", videoName: nil, thisIsAudioFileName: "this_is_a-deer", negativeAudioFileName: "negative_response_deer", whereIsAudioFileName: "where_is_deer"),
         LearningObject(name: "alligator", nepaliName: "गोही", imageName: "alligator", videoName: nil, thisIsAudioFileName: "this_is_a-alligator", negativeAudioFileName: "negative_response_alligator", whereIsAudioFileName: "where_is_alligator"),
-        LearningObject(name: "horse1", nepaliName: "घोडा", imageName: nil, videoName: "horse", thisIsAudioFileName: "this_is_a-horse", negativeAudioFileName: "negative_response_horse", whereIsAudioFileName: "where_is_horse"),
-        LearningObject(name: "cow1", nepaliName: "गाई", imageName: "cow", videoName: nil, thisIsAudioFileName: "this_is_a-cow", negativeAudioFileName: "negative_response_cow", whereIsAudioFileName: "where_is_cow"),
-        LearningObject(name: "sheep1", nepaliName: "भेंडा", imageName: "sheep", videoName: nil, thisIsAudioFileName: "this_is_a-sheep", negativeAudioFileName: "negative_response_sheep", whereIsAudioFileName: "where_is_sheep"),
-        LearningObject(name: "goat1", nepaliName: "बाख्रा", imageName: "goat", videoName: "goat", thisIsAudioFileName: "this_is_a-goat", negativeAudioFileName: "negative_response_goat", whereIsAudioFileName: "where_is_goat"),
-        LearningObject(name: "dog1", nepaliName: "कुकुर", imageName: "dog", videoName: nil, thisIsAudioFileName: "this_is_a-dog", negativeAudioFileName: "negative_response_dog", whereIsAudioFileName: "where_is_dog"),
-        LearningObject(name: "cat1", nepaliName: "बिरालो", imageName: "cat", videoName: "cat", thisIsAudioFileName: "this_is_a-cat", negativeAudioFileName: "negative_response_cat", whereIsAudioFileName: "where_is_cat"),
-        LearningObject(name: "tiger1", nepaliName: "बाघ", imageName: "tiger", videoName: nil, thisIsAudioFileName: "this_is_a-tiger", negativeAudioFileName: "negative_response_tiger", whereIsAudioFileName: "where_is_tiger"),
-        LearningObject(name: "rhinoceros1", nepaliName: "गैडा", imageName: "rhinoceros", videoName: nil, thisIsAudioFileName: "this_is_a-rhinoceros", negativeAudioFileName: "negative_response_rhinoceros", whereIsAudioFileName: "where_is_rhinoceros"),
-        LearningObject(name: "buffalo1", nepaliName: "भैंसी", imageName: "buffalo", videoName: nil, thisIsAudioFileName: "this_is_a-buffalo", negativeAudioFileName: "negative_response_buffalo", whereIsAudioFileName: "where_is_buffalo"),
-        LearningObject(name: "pig1", nepaliName: "सुँगुर", imageName: "pig", videoName: nil, thisIsAudioFileName: "this_is_a-pig", negativeAudioFileName: "negative_response_pig", whereIsAudioFileName: "where_is_pig"),
-        LearningObject(name: "deer1", nepaliName: "हिरण", imageName: "deer", videoName: nil, thisIsAudioFileName: "this_is_a-deer", negativeAudioFileName: "negative_response_deer", whereIsAudioFileName: "where_is_deer"),
-        LearningObject(name: "alligator1", nepaliName: "गोही", imageName: "alligator", videoName: nil, thisIsAudioFileName: "this_is_a-alligator", negativeAudioFileName: "negative_response_alligator", whereIsAudioFileName: "where_is_alligator")
+        LearningObject(name: "horse1", nepaliName: "घोडा", imageName: nil, videoName: "horse", thisIsAudioFileName: "this_is_a-horse", negativeAudioFileName: "negative_response_horse", whereIsAudioFileName: "where_is_horse")
     ]
     @Published var currentObjects: [LearningObject] = []
     @Published var currentPrompt: String = ""
