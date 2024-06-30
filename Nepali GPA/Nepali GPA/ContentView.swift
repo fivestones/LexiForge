@@ -202,32 +202,6 @@ struct StatusBar: View {
     }
 }
 
-//struct ControlBar: View {
-//    @ObservedObject var viewModel: LearningViewModel
-//
-//    var body: some View {
-//        HStack {
-//            Button("अर्को वस्तु प्रस्तुत गर्नुहोस्") {
-//                viewModel.introduceNextObject()
-//            }
-//            .padding()
-//            .background(Color.blue)
-//            .foregroundColor(.white)
-//            .cornerRadius(10)
-//
-//            Button("प्रश्न सोध्नुहोस्") {
-//                viewModel.askQuestion()
-//            }
-//            .padding()
-//            .background(Color.green)
-//            .foregroundColor(.white)
-//            .cornerRadius(10)
-//        }
-//        .padding(.horizontal)
-//        .padding(.bottom, UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0) // Safe area inset for bottom
-//    }
-//}
-
 struct ControlBar: View {
     @ObservedObject var viewModel: LearningViewModel
     
