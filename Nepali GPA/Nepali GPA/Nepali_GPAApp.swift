@@ -12,7 +12,9 @@ struct Nepali_GPAApp: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RotatingView {
+                ContentView()
+            }
         }
     }
 }

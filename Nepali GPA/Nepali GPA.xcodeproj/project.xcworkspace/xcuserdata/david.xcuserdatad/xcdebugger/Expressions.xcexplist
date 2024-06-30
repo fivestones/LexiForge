@@ -11,10 +11,40 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
+         contextName = "closure #1 in Nepali_GPAApp.body.getter:Nepali_GPAApp.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "UIDevice.current.orientation">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "closure #4 in closure #1 in ContentView.body.getter:ContentView.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "UIDevice.current.orientation">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
          contextName = "LearningViewModel.selectNextObjectToAsk():LearningViewModel.swift">
       </ContextState>
       <ContextState
          contextName = "closure #1 in LearningViewModel.selectNextObjectToAsk():LearningViewModel.swift">
+      </ContextState>
+      <ContextState
+         contextName = "ParentView.body.getter:ContentView.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "ContentView.orientation">
+            </PersistentString>
+            <PersistentString
+               value = "upsideDownModel.isUpsideDown">
+            </PersistentString>
+            <PersistentString
+               value = "orientation">
+            </PersistentString>
+         </PersistentStrings>
       </ContextState>
    </ContextStates>
 </VariablesViewState>

@@ -1,4 +1,40 @@
 import SwiftUI
+import Combine
+
+class DeviceOrientationManager: ObservableObject { // This whole class is a bunch of malarky to make the app work upside down on an iphone.
+    @Published var isPortraitUpsideDown: Bool = false
+
+    private var orientationDidChangeNotification: AnyCancellable?
+
+    init() {
+        self.isPortraitUpsideDown = UIDevice.current.orientation == .portraitUpsideDown && UIDevice.current.userInterfaceIdiom == .phone
+
+        orientationDidChangeNotification = NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)
+            .sink { [weak self] _ in
+                if UIDevice.current.userInterfaceIdiom == .phone {
+                    if UIDevice.current.orientation == .portraitUpsideDown {
+                        self?.isPortraitUpsideDown = true
+                        self?.forcePortraitMode()
+                    } else {
+                        self?.isPortraitUpsideDown = false
+                    }
+                }
+            }
+    }
+
+    private func forcePortraitMode() {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
+        windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { error in
+            if let error = error as? NSError {
+                print("Failed to request geometry update: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    deinit {
+        orientationDidChangeNotification?.cancel()
+    }
+}
 
 struct ContentView: View {
     @StateObject var viewModel = LearningViewModel()
@@ -7,6 +43,7 @@ struct ContentView: View {
     @State private var columns: Int = 1
     @State private var verticalSpacing: CGFloat = 0
     @State private var horizontalSpacing: CGFloat = 0
+    @State private var orientation = UIDeviceOrientation.unknown
 
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.verticalSizeClass) var verticalSizeClass
@@ -31,7 +68,6 @@ struct ContentView: View {
                             }
                         }
                         .padding(.horizontal, horizontalSpacing) // Add horizontal padding to the grid
-                        
 
                         Spacer().frame(height: 70) // Add space to ensure content is not hidden behind the control bar
                     }
@@ -47,10 +83,15 @@ struct ContentView: View {
             .onAppear {
                 // Use screen dimensions for initial layout calculation
                 updateLayout(for: geometry.size)
+                orientation = UIDevice.current.orientation
             }
             .onChange(of: geometry.size) { newSize in
                 // Recalculate layout when size changes (orientation change)
                 updateLayout(for: newSize)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIDevice.orientationDidChangeNotification)) { _ in
+                orientation = UIDevice.current.orientation
+                updateLayout(for: geometry.size)
             }
         }
     }
@@ -68,17 +109,8 @@ struct ContentView: View {
         let availableWidth = size.width// - 64 // Subtract horizontal padding
         let availableHeight = size.height - 70 - 60 //- 64 // Subtract button height, text height, and vertical padding
 
-        if columns > 1 {
-            horizontalSpacing = max((availableWidth - (CGFloat(columns) * itemSize)) / CGFloat(columns + 1), 0)
-        } else {
-            horizontalSpacing = 0
-        }
-
-        if rows > 1 {
-            verticalSpacing = max((availableHeight - (CGFloat(rows) * itemSize)) / CGFloat(rows + 1), 0) // I changed to + 1 in CGFloat(rows + 1) instead of - 1 to account for padding at the edges.
-        } else {
-            verticalSpacing = 0
-        }
+        horizontalSpacing = columns > 1 ? max((availableWidth - (CGFloat(columns) * itemSize)) / CGFloat(columns + 1), 0) : 0
+        verticalSpacing = rows > 1 ? max((availableHeight - (CGFloat(rows) * itemSize)) / CGFloat(rows + 1), 0) : 0
     }
 
     // Unified calculateOptimalLayout function to take CGSize
@@ -184,8 +216,29 @@ struct ControlBar: View {
             .background(Color.green)
             .foregroundColor(.white)
             .cornerRadius(10)
+            
+            Button("Force landscape") {
+                guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
+                windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait))
+            }
+
         }
         .padding(.horizontal)
         .padding(.bottom, UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0) // Safe area inset for bottom
+    }
+}
+
+
+struct RotatingView<Content: View>: View {
+    @StateObject private var orientationManager = DeviceOrientationManager()
+    let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    var body: some View {
+        content
+            .rotationEffect(orientationManager.isPortraitUpsideDown ? .degrees(180) : .degrees(0))
     }
 }
