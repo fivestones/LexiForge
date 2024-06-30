@@ -4,7 +4,13 @@ struct ContentView: View {
     @StateObject var viewModel = LearningViewModel()
     @State private var highlightedObject: LearningObject?
     @State private var itemSize: CGFloat = 0
-    
+    @State private var columns: Int = 1
+    @State private var verticalSpacing: CGFloat = 0
+    @State private var horizontalSpacing: CGFloat = 0
+
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    @Environment(\.verticalSizeClass) var verticalSizeClass
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -13,20 +19,24 @@ struct ContentView: View {
                         Text(viewModel.currentPrompt)
                             .font(.title)
                             .padding()
-                        
-                        let layout = calculateLayout(for: geometry.size, objectCount: viewModel.currentObjects.count)
-                        
-                        LazyVGrid(columns: layout.columns, spacing: layout.verticalSpacing) {
+
+                        // Create the grid layout with the calculated number of columns
+                        let gridItems = Array(repeating: GridItem(.fixed(itemSize), spacing: horizontalSpacing), count: columns)
+
+                        // LazyVGrid to display objects in a grid
+                        LazyVGrid(columns: gridItems, spacing: verticalSpacing) {
                             ForEach(viewModel.currentObjects, id: \.name) { object in
                                 objectView(for: object)
+                                    .frame(width: itemSize, height: itemSize) // Set the frame size for each object
                             }
                         }
-                        .padding(.horizontal, layout.horizontalPadding)
+                        .padding(.horizontal, horizontalSpacing) // Add horizontal padding to the grid
                         
+
                         Spacer().frame(height: 70) // Add space to ensure content is not hidden behind the control bar
                     }
                 }
-                
+
                 VStack {
                     Spacer()
                     ControlBar(viewModel: viewModel)
@@ -34,63 +44,91 @@ struct ContentView: View {
                         .background(Color.gray.opacity(0.2))
                 }
             }
-        }
-        .onReceive(viewModel.$highlightedObject) { object in
-            highlightedObject = object
-        }
-        .onAppear {
-            itemSize = calculateItemSize()
-        }
-    }
-    
-    func calculateItemSize() -> CGFloat {
-        let screen = UIScreen.main.bounds
-        let portraitWidth = min(screen.width, screen.height)
-        let isIPad = UIDevice.current.userInterfaceIdiom == .pad
-        let baseColumnCount = isIPad ? 4 : 3
-        let horizontalPadding: CGFloat = 32
-        let spacing: CGFloat = 16 * CGFloat(baseColumnCount - 1)
-        let availableWidth = portraitWidth - horizontalPadding - spacing
-        return availableWidth / CGFloat(baseColumnCount)
-    }
-    
-    func calculateLayout(for size: CGSize, objectCount: Int) -> (columns: [GridItem], verticalSpacing: CGFloat, horizontalPadding: CGFloat) {
-        let isIPad = UIDevice.current.userInterfaceIdiom == .pad
-        let isLandscape = size.width > size.height
-        
-        var columnCount: Int
-        var horizontalSpacing: CGFloat
-        var verticalSpacing: CGFloat
-        
-        if isIPad {
-            if isLandscape {
-                columnCount = 4
-                horizontalSpacing = 16
-                verticalSpacing = 16
-            } else {
-                columnCount = objectCount > 12 ? 4 : 3
-                if columnCount == 3 {
-                    // Increase spacing for 3-column layout on iPad
-                    let availableSpace = size.width - (itemSize * 3)
-                    horizontalSpacing = availableSpace / 4  // Divide by 4 to get spacing between and on sides
-                    verticalSpacing = horizontalSpacing
-                } else {
-                    horizontalSpacing = 16
-                    verticalSpacing = 16
-                }
+            .onAppear {
+                // Use screen dimensions for initial layout calculation
+                updateLayout(for: geometry.size)
             }
-        } else {
-            columnCount = isLandscape ? 6 : 3
-            horizontalSpacing = 8
-            verticalSpacing = 16
+            .onChange(of: geometry.size) { newSize in
+                // Recalculate layout when size changes (orientation change)
+                updateLayout(for: newSize)
+            }
         }
-        
-        let columns = Array(repeating: GridItem(.fixed(itemSize), spacing: horizontalSpacing), count: columnCount)
-        let horizontalPadding = horizontalSpacing
-        
-        return (columns, verticalSpacing, horizontalPadding)
     }
-    
+
+    // Function to update layout based on available size
+    func updateLayout(for size: CGSize) {
+        let layout = calculateOptimalLayout(viewModel: viewModel, size: size)
+        itemSize = layout.itemSize
+        columns = layout.columns
+        
+        // Calculate the number of rows
+        let rows = Int(ceil(Double(viewModel.objects.count) / Double(columns)))
+
+        // Calculate the optimal spacing
+        let availableWidth = size.width// - 64 // Subtract horizontal padding
+        let availableHeight = size.height - 70 - 60 //- 64 // Subtract button height, text height, and vertical padding
+
+        if columns > 1 {
+            horizontalSpacing = max((availableWidth - (CGFloat(columns) * itemSize)) / CGFloat(columns + 1), 0)
+        } else {
+            horizontalSpacing = 0
+        }
+
+        if rows > 1 {
+            verticalSpacing = max((availableHeight - (CGFloat(rows) * itemSize)) / CGFloat(rows + 1), 0) // I changed to + 1 in CGFloat(rows + 1) instead of - 1 to account for padding at the edges.
+        } else {
+            verticalSpacing = 0
+        }
+    }
+
+    // Unified calculateOptimalLayout function to take CGSize
+    func calculateOptimalLayout(viewModel: LearningViewModel, size: CGSize) -> (itemSize: CGFloat, columns: Int) {
+        // Constants for padding and other UI elements
+        let horizontalPadding: CGFloat = 32 // Padding on the left and right sides
+        let verticalPadding: CGFloat = 32 // Padding on the top and bottom sides
+        let buttonHeight: CGFloat = 70 // Approximate height for the buttons at the bottom
+        let textHeight: CGFloat = 60 // Approximate height for the text at the top
+
+        // Determine the number of objects
+        let objectCount = viewModel.objects.count // Get the total number of objects in viewModel.objects
+
+        // Calculate available width and height
+        let availableWidth = size.width - horizontalPadding
+        let availableHeight = size.height - verticalPadding - buttonHeight - textHeight
+
+        // Variables to store the optimal item size and number of columns
+        var optimalItemSize: CGFloat = 0
+        var optimalColumns: Int = 1
+
+        // Iterate through possible column counts to find the optimal layout
+        for columns in 1...objectCount {
+            let rows = Int(ceil(Double(objectCount) / Double(columns))) // Calculate the number of rows for the current column count
+
+            // Calculate the item size without spacing
+            let itemWidth = availableWidth / CGFloat(columns)
+            let itemHeight = availableHeight / CGFloat(rows)
+
+            // Determine the smaller of the two dimensions to ensure square items
+            let baseItemSize = min(itemWidth, itemHeight)
+
+            // Calculate spacing as a percentage of the base item size
+            let spacingPercentage: CGFloat = 0.1 // 5% of the item size for spacing
+            let spacing = baseItemSize * spacingPercentage
+
+            // Adjust the item size to account for spacing
+            let adjustedItemSize = baseItemSize - spacing
+
+            // Check if the adjusted item size is larger than the current optimal item size
+            if adjustedItemSize > optimalItemSize && rows <= Int(size.height / adjustedItemSize) && columns <= Int(size.width / adjustedItemSize) {
+                optimalItemSize = adjustedItemSize // Update the optimal item size
+                optimalColumns = columns // Update the optimal number of columns
+            }
+        }
+
+        // Return the optimal item size and number of columns
+        return (optimalItemSize, optimalColumns)
+    }
+
     @ViewBuilder
     func objectView(for object: LearningObject) -> some View {
         Group {
@@ -128,7 +166,7 @@ struct ContentView: View {
 
 struct ControlBar: View {
     @ObservedObject var viewModel: LearningViewModel
-    
+
     var body: some View {
         HStack {
             Button("अर्को वस्तु प्रस्तुत गर्नुहोस्") {
@@ -138,7 +176,7 @@ struct ControlBar: View {
             .background(Color.blue)
             .foregroundColor(.white)
             .cornerRadius(10)
-            
+
             Button("प्रश्न सोध्नुहोस्") {
                 viewModel.askQuestion()
             }
