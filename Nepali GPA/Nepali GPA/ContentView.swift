@@ -7,32 +7,31 @@ struct ContentView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            ScrollView {
-                VStack {
-                    Text(viewModel.currentPrompt)
-                        .font(.title)
-                        .padding()
-                    
-                    let layout = calculateLayout(for: geometry.size, objectCount: viewModel.currentObjects.count)
-                    
-                    LazyVGrid(columns: layout.columns, spacing: layout.verticalSpacing) {
-                        ForEach(viewModel.currentObjects, id: \.name) { object in
-                            objectView(for: object)
+            ZStack {
+                ScrollView {
+                    VStack {
+                        Text(viewModel.currentPrompt)
+                            .font(.title)
+                            .padding()
+                        
+                        let layout = calculateLayout(for: geometry.size, objectCount: viewModel.currentObjects.count)
+                        
+                        LazyVGrid(columns: layout.columns, spacing: layout.verticalSpacing) {
+                            ForEach(viewModel.currentObjects, id: \.name) { object in
+                                objectView(for: object)
+                            }
                         }
+                        .padding(.horizontal, layout.horizontalPadding)
+                        
+                        Spacer().frame(height: 70) // Add space to ensure content is not hidden behind the control bar
                     }
-                    .padding(.horizontal, layout.horizontalPadding)
-                    
+                }
+                
+                VStack {
                     Spacer()
-                    
-                    Button("अर्को वस्तु प्रस्तुत गर्नुहोस्") {
-                        viewModel.introduceNextObject()
-                    }
-                    .padding()
-                    
-                    Button("प्रश्न सोध्नुहोस्") {
-                        viewModel.askQuestion()
-                    }
-                    .padding()
+                    ControlBar(viewModel: viewModel)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.gray.opacity(0.2))
                 }
             }
         }
@@ -124,5 +123,31 @@ struct ContentView: View {
             }
         }
         .allowsHitTesting(!viewModel.grayedOutObjects.contains(object))
+    }
+}
+
+struct ControlBar: View {
+    @ObservedObject var viewModel: LearningViewModel
+    
+    var body: some View {
+        HStack {
+            Button("अर्को वस्तु प्रस्तुत गर्नुहोस्") {
+                viewModel.introduceNextObject()
+            }
+            .padding()
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(10)
+            
+            Button("प्रश्न सोध्नुहोस्") {
+                viewModel.askQuestion()
+            }
+            .padding()
+            .background(Color.green)
+            .foregroundColor(.white)
+            .cornerRadius(10)
+        }
+        .padding(.horizontal)
+        .padding(.bottom, UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0) // Safe area inset for bottom
     }
 }
