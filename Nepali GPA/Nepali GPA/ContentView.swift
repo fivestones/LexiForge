@@ -16,9 +16,10 @@ struct ContentView: View {
             ZStack {
                 ScrollView {
                     VStack {
-                        Text(viewModel.currentPrompt)
-                            .font(.title)
-                            .padding()
+                        StatusBar(viewModel: viewModel)
+                        
+                        Spacer()
+                            .frame(height: 40)
 
                         // Create the grid layout with the calculated number of columns
                         let gridItems = Array(repeating: GridItem(.fixed(itemSize), spacing: horizontalSpacing), count: columns)
@@ -31,7 +32,6 @@ struct ContentView: View {
                             }
                         }
                         .padding(.horizontal, horizontalSpacing) // Add horizontal padding to the grid
-                        
 
                         Spacer().frame(height: 70) // Add space to ensure content is not hidden behind the control bar
                     }
@@ -51,6 +51,9 @@ struct ContentView: View {
             .onChange(of: geometry.size) { newSize in
                 // Recalculate layout when size changes (orientation change)
                 updateLayout(for: newSize)
+            }
+            .onReceive(viewModel.$highlightedObject) { object in
+                highlightedObject = object
             }
         }
     }
@@ -152,6 +155,8 @@ struct ContentView: View {
                 .stroke(highlightedObject == object ? Color.red : (viewModel.correctAnswerObjectWasSelected == object ? Color.green : Color.clear), lineWidth: 4)
         )
         .scaleEffect(highlightedObject == object || viewModel.correctAnswerObjectWasSelected == object ? 1.1 : 1.0)
+//        .animation(.easeInOut(duration: 0.3), value: highlightedObject)
+//        .animation(.easeInOut(duration: 0.3), value: viewModel.correctAnswerObjectWasSelected)
         .animation(.easeInOut, value: highlightedObject)
         .animation(.easeInOut, value: viewModel.correctAnswerObjectWasSelected)
         .opacity(viewModel.grayedOutObjects.contains(object) ? 0.2 : 1.0)
@@ -164,28 +169,104 @@ struct ContentView: View {
     }
 }
 
+struct StatusBar: View {
+    @ObservedObject var viewModel: LearningViewModel
+    
+    var body: some View {
+        ZStack{
+            HStack{
+                //left side of the StatusBar
+                Spacer()
+            }
+            
+            HStack{
+                //Center of the StatusBar
+                Text(viewModel.currentPrompt)
+                .font(.title)
+                .foregroundColor(.white)
+            }
+
+            HStack{
+                //Right side of the StatusBar
+                Spacer()
+                Text("You can do it!")
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding(.trailing)
+            }
+            
+        }
+        .padding()
+        .background(Color.blue)
+        .frame(height: 40) // Adjust height as needed
+    }
+}
+
+//struct ControlBar: View {
+//    @ObservedObject var viewModel: LearningViewModel
+//
+//    var body: some View {
+//        HStack {
+//            Button("अर्को वस्तु प्रस्तुत गर्नुहोस्") {
+//                viewModel.introduceNextObject()
+//            }
+//            .padding()
+//            .background(Color.blue)
+//            .foregroundColor(.white)
+//            .cornerRadius(10)
+//
+//            Button("प्रश्न सोध्नुहोस्") {
+//                viewModel.askQuestion()
+//            }
+//            .padding()
+//            .background(Color.green)
+//            .foregroundColor(.white)
+//            .cornerRadius(10)
+//        }
+//        .padding(.horizontal)
+//        .padding(.bottom, UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0) // Safe area inset for bottom
+//    }
+//}
+
 struct ControlBar: View {
     @ObservedObject var viewModel: LearningViewModel
-
+    
     var body: some View {
         HStack {
-            Button("अर्को वस्तु प्रस्तुत गर्नुहोस्") {
+            Spacer()
+            Button(action: {
+                // Action for first button
                 viewModel.introduceNextObject()
+            }) {
+                Image(systemName: "plus.diamond")
+                    .font(.system(size: 24))
+                    .foregroundColor(.white)
+                    .padding()
             }
-            .padding()
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(10)
-
-            Button("प्रश्न सोध्नुहोस्") {
+            Spacer()
+            Button(action: {
+                // Action for second button
                 viewModel.askQuestion()
+            }) {
+                Image(systemName: "questionmark.bubble")
+                    .font(.system(size: 24))
+                    .foregroundColor(.white)
+                    .padding()
             }
-            .padding()
-            .background(Color.green)
-            .foregroundColor(.white)
-            .cornerRadius(10)
+            Spacer()
+            Button(action: {
+                // Action for third button
+                
+            }) {
+                Image(systemName: "restart.circle.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(.white)
+                    .padding()
+            }
+            .disabled(true)
+            Spacer()
         }
-        .padding(.horizontal)
-        .padding(.bottom, UIApplication.shared.windows.first?.safeAreaInsets.bottom ?? 0) // Safe area inset for bottom
+        .padding(.vertical, 10)
+        .background(Color.gray)
     }
 }
