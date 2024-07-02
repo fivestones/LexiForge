@@ -8,6 +8,9 @@ struct ContentView: View {
     @State private var verticalSpacing: CGFloat = 0
     @State private var horizontalSpacing: CGFloat = 0
 
+    @State private var isAutoMode: Bool = false
+    @State private var autoModeStep: Int = 0
+    
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.verticalSizeClass) var verticalSizeClass
 
@@ -39,7 +42,7 @@ struct ContentView: View {
 
                 VStack {
                     Spacer()
-                    ControlBar(viewModel: viewModel)
+                    ControlBar(viewModel: viewModel, isAutoMode: $isAutoMode, autoModeStep: $autoModeStep)
                         .frame(maxWidth: .infinity)
                         .background(Color.gray.opacity(0.2))
                 }
@@ -175,41 +178,36 @@ struct StatusBar: View {
     var body: some View {
         ZStack{
             HStack{
-                //left side of the StatusBar
                 Spacer()
             }
-            
             HStack{
-                //Center of the StatusBar
                 Text(viewModel.currentPrompt)
                 .font(.title)
                 .foregroundColor(.white)
             }
-
             HStack{
-                //Right side of the StatusBar
                 Spacer()
                 Text("You can do it!")
                 .font(.headline)
                 .foregroundColor(.white)
                 .padding(.trailing)
             }
-            
         }
         .padding()
         .background(Color.blue)
-        .frame(height: 40) // Adjust height as needed
+        .frame(height: 40)
     }
 }
 
 struct ControlBar: View {
     @ObservedObject var viewModel: LearningViewModel
+    @Binding var isAutoMode: Bool
+    @Binding var autoModeStep: Int
     
     var body: some View {
         HStack(spacing: 0) {
             Button(action: {
-                // Action for first button
-                viewModel.introduceNextObject()
+                viewModel.introduceNextObject(completion: {})
             }) {
                 Image(systemName: "plus.diamond")
                     .font(.system(size: 24))
@@ -218,8 +216,7 @@ struct ControlBar: View {
                     .background(Color.blue)
             }
             Button(action: {
-                // Action for second button
-                viewModel.askQuestion()
+                viewModel.askQuestion(completion: {})
             }) {
                 Image(systemName: "questionmark.bubble")
                     .font(.system(size: 24))
@@ -228,8 +225,7 @@ struct ControlBar: View {
                     .background(Color.green)
             }
             Button(action: {
-                // Action for third button
-                
+                viewModel.shuffleCurrentObjects()
             }) {
                 Image(systemName: "restart.circle.fill")
                     .font(.system(size: 24))
@@ -237,9 +233,37 @@ struct ControlBar: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color.red)
             }
-            .disabled(true)
+            Button(action: {
+                viewModel.isAutoMode = true
+                viewModel.autoModeStep = 0
+                viewModel.continueAutoMode()
+            }) {
+                Image(systemName: "play.circle.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.orange)
+            }
+            Button(action: {
+                // Repeat action to be implemented
+            }) {
+                Image(systemName: "repeat.circle.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.purple)
+            }
+            Button(action: {
+                viewModel.isAutoMode = false
+            }) {
+                Image(systemName: "pause.circle.fill")
+                    .font(.system(size: 24))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.yellow)
+            }
         }
-        .frame(height: 50) // Adjust the height as needed
+        .frame(height: 50)
         .background(Color.gray)
     }
 }

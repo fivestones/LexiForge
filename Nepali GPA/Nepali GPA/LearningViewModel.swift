@@ -24,22 +24,28 @@ class LearningViewModel: ObservableObject {
     @Published var attempts: Int = 0 // property for counting attempts
     @Published var grayedOutObjects: [LearningObject] = []
     @Published var correctAnswerObjectWasSelected: LearningObject? // Flag to track the correct answer
-
+    @Published var isAutoMode: Bool = false // State variable for auto mode
+    @Published var autoModeStep: Int = 0 // Variable to track progress along the auto mode pathway
+    
         var currentAudioPlayer: AVAudioPlayer?
         var audioQueuePlayer: AVQueuePlayer?
         var continuePlaying = true
 
-    func introduceNextObject() {
+    func introduceNextObject(completion: @escaping () -> Void) {
         stopCurrentAudio()
         if currentObjects.count < objects.count {
             let newObject = objects[currentObjects.count]
             currentObjects.append(newObject)
             currentPrompt = "यो \(newObject.nepaliName) हो।"
-            playSoundsSequentially(sounds: [newObject.thisIsAudioFileName], type: "m4a")
+            playSoundsSequentially(sounds: [newObject.thisIsAudioFileName], type: "m4a") {
+                completion()
+            }
+        } else {
+            completion()
         }
     }
     
-    func askQuestion() {
+    func askQuestion(completion: @escaping () -> Void) {
         stopCurrentAudio()
         guard !currentObjects.isEmpty else { return }
         let selectedObject = selectNextObjectToAsk()
@@ -48,9 +54,34 @@ class LearningViewModel: ObservableObject {
         attempts = 0 // Reset the attempt counter
         recordAskedInteraction(for: selectedObject)
         updateQuestionHistory(for: selectedObject)
-        playSoundsSequentially(sounds: [selectedObject.whereIsAudioFileName], type: "m4a")
-    }
+        playSoundsSequentially(sounds: [selectedObject.whereIsAudioFileName], type: "m4a", completion: completion)
+        }
     
+    func continueAutoMode() {
+        switch autoModeStep {
+        case 0:
+            introduceNextObject {
+                self.autoModeStep += 1
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    self.introduceNextObject {
+                        self.autoModeStep += 1
+                        self.continueAutoMode()
+                    }
+                }
+            }
+        case 1:
+            askQuestion {
+                self.autoModeStep += 1
+            }
+        case 2:
+            // Additional auto mode logic for learning and introducing objects
+            // Update autoModeStep accordingly
+            break
+        default:
+            break
+        }
+    }
+
     func checkAnswer(selectedObject: LearningObject) {
         stopCurrentAudio()
         print("Checking answer for: \(selectedObject.name)")
@@ -105,6 +136,10 @@ class LearningViewModel: ObservableObject {
         } else {
             print("No matching object found for target name: \(targetName)")
         }
+    }
+    
+    func shuffleCurrentObjects() {
+        currentObjects.shuffle()
     }
     
     private func recordInteraction(for object: LearningObject, type: LearningObject.Interaction.InteractionType) {
@@ -235,7 +270,8 @@ class LearningViewModel: ObservableObject {
         sounds: [String],
         type: String,
         objects: [LearningObject?] = [],
-        firstItemCompletion: (() -> Void)? = nil
+        firstItemCompletion: (() -> Void)? = nil,
+        completion: (() -> Void)? = nil
     ) {
         continuePlaying = true
         var audioItems: [AVPlayerItem] = []
@@ -268,6 +304,14 @@ class LearningViewModel: ObservableObject {
             NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: firstItem, queue: .main) { _ in
                 firstItemCompletion?()
                 NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: firstItem)
+            }
+        }
+
+        // Add observer to call completion handler after all items end
+        if let lastItem = audioItems.last {
+            NotificationCenter.default.addObserver(forName: .AVPlayerItemDidPlayToEndTime, object: lastItem, queue: .main) { _ in
+                completion?()
+                NotificationCenter.default.removeObserver(self, name: .AVPlayerItemDidPlayToEndTime, object: lastItem)
             }
         }
 
