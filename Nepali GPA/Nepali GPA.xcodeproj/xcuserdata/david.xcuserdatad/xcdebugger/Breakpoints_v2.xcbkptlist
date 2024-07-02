@@ -20,5 +20,51 @@
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "422BBBEB-BF40-472B-95D8-86A3AC13283D"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Nepali GPA/LearningViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "78"
+            endingLineNumber = "78"
+            landmarkName = "continueAutoMode()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "422BBBEB-BF40-472B-95D8-86A3AC13283D - d3167e7900be7133"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Nepali_GPA.LearningViewModel.continueAutoMode() -&gt; ()"
+                  moduleName = "Nepali GPA"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/david/development/dirty%20dozen/Nepali%20GPA/Nepali%20GPA/LearningViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "78"
+                  endingLineNumber = "78">
+               </Location>
+               <Location
+                  uuid = "422BBBEB-BF40-472B-95D8-86A3AC13283D - b9119db4aa88c906"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #3 () -&gt; () in Nepali_GPA.LearningViewModel.continueAutoMode() -&gt; ()"
+                  moduleName = "Nepali GPA"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/david/development/dirty%20dozen/Nepali%20GPA/Nepali%20GPA/LearningViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "79"
+                  endingLineNumber = "79">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
    </Breakpoints>
 </Bucket>

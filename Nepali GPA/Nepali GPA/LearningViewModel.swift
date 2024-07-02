@@ -55,7 +55,7 @@ class LearningViewModel: ObservableObject {
         recordAskedInteraction(for: selectedObject)
         updateQuestionHistory(for: selectedObject)
         playSoundsSequentially(sounds: [selectedObject.whereIsAudioFileName], type: "m4a", completion: completion)
-        }
+    }
     
     func continueAutoMode() {
         switch autoModeStep {
@@ -72,11 +72,12 @@ class LearningViewModel: ObservableObject {
         case 1:
             askQuestion {
                 self.autoModeStep += 1
+                self.continueAutoMode()
             }
-        case 2:
-            // Additional auto mode logic for learning and introducing objects
-            // Update autoModeStep accordingly
-            break
+        case let x where x > 1:
+            askQuestion {
+                self.autoModeStep += 1
+            }
         default:
             break
         }
@@ -107,6 +108,9 @@ class LearningViewModel: ObservableObject {
                         // Restore all grayed out objects
                         self?.grayedOutObjects.removeAll()
                         self?.correctAnswerObjectWasSelected = nil // Reset the correct answer object after playback
+                        if self?.isAutoMode == true {
+                            self?.continueAutoMode()
+                        }
                     }
                 )
             } else {
