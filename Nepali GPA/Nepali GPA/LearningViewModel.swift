@@ -14,8 +14,7 @@ class LearningViewModel: ObservableObject {
         LearningObject(name: "buffalo", nepaliName: "भैंसी", imageName: "buffalo", videoName: nil, thisIsAudioFileName: "this_is_a-buffalo", negativeAudioFileName: "negative_response_buffalo", whereIsAudioFileName: "where_is_buffalo"),
         LearningObject(name: "pig", nepaliName: "सुँगुर", imageName: "pig", videoName: nil, thisIsAudioFileName: "this_is_a-pig", negativeAudioFileName: "negative_response_pig", whereIsAudioFileName: "where_is_pig"),
         LearningObject(name: "deer", nepaliName: "हिरण", imageName: "deer", videoName: nil, thisIsAudioFileName: "this_is_a-deer", negativeAudioFileName: "negative_response_deer", whereIsAudioFileName: "where_is_deer"),
-        LearningObject(name: "alligator", nepaliName: "गोही", imageName: "alligator", videoName: nil, thisIsAudioFileName: "this_is_a-alligator", negativeAudioFileName: "negative_response_alligator", whereIsAudioFileName: "where_is_alligator"),
-        LearningObject(name: "horse1", nepaliName: "घोडा", imageName: nil, videoName: "horse", thisIsAudioFileName: "this_is_a-horse", negativeAudioFileName: "negative_response_horse", whereIsAudioFileName: "where_is_horse")
+        LearningObject(name: "alligator", nepaliName: "गोही", imageName: "alligator", videoName: nil, thisIsAudioFileName: "this_is_a-alligator", negativeAudioFileName: "negative_response_alligator", whereIsAudioFileName: "where_is_alligator")
     ]
     @Published var currentObjects: [LearningObject] = []
     @Published var currentPrompt: String = ""
@@ -34,7 +33,8 @@ class LearningViewModel: ObservableObject {
     func introduceNextObject(completion: @escaping () -> Void) {
         stopCurrentAudio()
         if currentObjects.count < objects.count {
-            let newObject = objects[currentObjects.count]
+            var newObject = objects[currentObjects.count]
+            newObject.introducedHistory = Date() // Set the introduction date
             currentObjects.append(newObject)
             currentPrompt = "यो \(newObject.nepaliName) हो।"
             playSoundsSequentially(sounds: [newObject.thisIsAudioFileName], type: "m4a") {
@@ -69,20 +69,55 @@ class LearningViewModel: ObservableObject {
                     }
                 }
             }
-        case 1:
-            askQuestion {
-                self.autoModeStep += 1
-                self.continueAutoMode()
-            }
-        case let x where x > 1:
-            askQuestion {
-                self.autoModeStep += 1
+        case let x where x > 0:
+            if checkCompetency() {
+                introduceNextObject {
+                    self.autoModeStep = 1
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        self.continueAutoMode()
+                    }
+                }
+            } else {
+                askQuestion {
+                    self.autoModeStep += 1
+//                    self.continueAutoMode()
+                }
             }
         default:
             break
         }
     }
 
+    func checkCompetency() -> Bool {
+        print("Checking competency")
+        // Create a mutable copy of currentObjects to work with
+        var mutableCurrentObjects = currentObjects
+
+        // Check if all objects have a raw competency factor of at least 400
+        let allObjectsCompetent = mutableCurrentObjects.allSatisfy {
+            var object = $0
+            return object.calculateLearnerCompetencyScore() >= 400
+        }
+        print("allObjectsCompetent: \(allObjectsCompetent)")
+
+        // Check if the most recent object was answered correctly the last two times
+        guard let lastIntroducedObject = mutableCurrentObjects.last else { return false }
+        let lastTwoInteractions = lastIntroducedObject.history.suffix(2)
+        let lastTwoCorrect = lastTwoInteractions.count == 2 && lastTwoInteractions.allSatisfy { $0.type == .answeredCorrectly }
+        print("lastTwoCorrect: \(lastTwoCorrect)")
+        
+        // Check if at least 90% of the objects have been asked about at least once since the last object was introduced
+        let objectsAskedSinceLast = mutableCurrentObjects.filter {
+            var object = $0
+            return object.askedHistory.last ?? Date.distantPast > (lastIntroducedObject.introducedHistory ?? Date.distantPast)
+        }
+        print("objectsAskedSinceLast: \(objectsAskedSinceLast.count)")
+        print("currentObjects: \(currentObjects.count)")
+        let ninetyPercentAsked = Double(objectsAskedSinceLast.count) / Double(mutableCurrentObjects.count) >= 0.9
+        print("ninetyPercentAsked: \(ninetyPercentAsked)")
+        
+        return allObjectsCompetent && lastTwoCorrect && ninetyPercentAsked
+    }
     func checkAnswer(selectedObject: LearningObject) {
         stopCurrentAudio()
         print("Checking answer for: \(selectedObject.name)")

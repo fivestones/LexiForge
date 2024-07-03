@@ -17,6 +17,7 @@ struct LearningObject: Equatable {
         }
     }
     var askedHistory: [Date] = []
+    var introducedHistory: Date? // New variable for introduced history
     var questionHistory: Int? = nil
     private var cachedScore: Double?
     private var cachedHistoryCount: Int = 0
@@ -40,7 +41,7 @@ struct LearningObject: Equatable {
     }
 
     // Explicit initializer
-    init(name: String, nepaliName: String, imageName: String?, videoName: String?, thisIsAudioFileName: String, negativeAudioFileName: String, whereIsAudioFileName: String, history: [Interaction] = [], askedHistory: [Date] = [], questionHistory: Int? = nil, cachedScore: Double? = nil, cachedHistoryCount: Int = 0) {
+    init(name: String, nepaliName: String, imageName: String?, videoName: String?, thisIsAudioFileName: String, negativeAudioFileName: String, whereIsAudioFileName: String, history: [Interaction] = [], askedHistory: [Date] = [], introducedHistory: Date? = nil, questionHistory: Int? = nil, cachedScore: Double? = nil, cachedHistoryCount: Int = 0) {
         self.name = name
         self.nepaliName = nepaliName
         self.imageName = imageName
@@ -50,6 +51,7 @@ struct LearningObject: Equatable {
         self.whereIsAudioFileName = whereIsAudioFileName
         self.history = history
         self.askedHistory = askedHistory
+        self.introducedHistory = introducedHistory
         self.questionHistory = questionHistory
         self.cachedScore = cachedScore
         self.cachedHistoryCount = cachedHistoryCount
