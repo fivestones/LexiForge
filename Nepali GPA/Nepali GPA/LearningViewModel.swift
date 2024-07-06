@@ -18,6 +18,7 @@ class LearningViewModel: ObservableObject {
     @Published var currentObjects: [LearningObject] = []
     @Published var currentPrompt: String = ""
     @Published var highlightedObject: LearningObject?
+    @Published var highlightedCorrectObject: LearningObject?
     @Published var introducingObject: LearningObject?
     @Published var introductionFinished: LearningObject?
     @Published var targetWord: String?
@@ -26,6 +27,8 @@ class LearningViewModel: ObservableObject {
     @Published var correctAnswerObjectWasSelected: LearningObject? // Flag to track the correct answer
     @Published var isAutoMode: Bool = false // State variable for auto mode
     @Published var autoModeStep: Int = 0 // Variable to track progress along the auto mode pathway
+    @Published var isQuestionAudioPlaying: Bool = false
+    @Published var currentQuestionObject: LearningObject? = nil
     
         var currentAudioPlayer: AVAudioPlayer?
         var audioQueuePlayer: AVQueuePlayer?
@@ -46,15 +49,38 @@ class LearningViewModel: ObservableObject {
     }
     
     func askQuestion(completion: @escaping () -> Void) {
+        if isQuestionAudioPlaying {
+                // If the question audio is playing, do nothing
+                return
+            }
         stopCurrentAudio()
         guard !currentObjects.isEmpty else { return }
+        
+        if let currentQuestionObject = currentQuestionObject {
+            // If there is a current question object and audio has finished, repeat the question audio
+            currentPrompt = "\(currentQuestionObject.nepaliName) कहाँ छ?"
+            isQuestionAudioPlaying = true
+            playSoundsSequentially(sounds: [currentQuestionObject.whereIsAudioFileName], type: "m4a", completion:  {
+                self.isQuestionAudioPlaying = false
+                completion()
+            })
+            return
+        }
+        
+        // Select a new question if no currentQuestionObject
         let selectedObject = selectNextObjectToAsk()
         currentPrompt = "\(selectedObject.nepaliName) कहाँ छ?"
         targetWord = selectedObject.nepaliName
         attempts = 0 // Reset the attempt counter
         recordAskedInteraction(for: selectedObject)
         updateQuestionHistory(for: selectedObject)
-        playSoundsSequentially(sounds: [selectedObject.whereIsAudioFileName], type: "m4a", completion: completion)
+        
+        currentQuestionObject = selectedObject // Set the current question object
+        isQuestionAudioPlaying = true
+        playSoundsSequentially(sounds: [selectedObject.whereIsAudioFileName], type: "m4a", completion:  {
+            self.isQuestionAudioPlaying = false
+            completion()
+        })
     }
     
     func continueAutoMode() {
@@ -146,6 +172,7 @@ class LearningViewModel: ObservableObject {
                         if self?.isAutoMode == true {
                             self?.continueAutoMode()
                         }
+                        self?.currentQuestionObject = nil // Reset the current question object
                     }
                 )
             } else {

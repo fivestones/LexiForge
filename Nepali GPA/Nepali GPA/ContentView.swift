@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @StateObject var viewModel = LearningViewModel()
     @State private var highlightedObject: LearningObject?
+    @State private var correctAnswerObjectWasSelected: LearningObject?
     @State private var introducingObject: LearningObject?
     @State private var introductionFinished: LearningObject?
     @State private var itemSize: CGFloat = 0
@@ -25,7 +26,7 @@ struct ContentView: View {
                 ZStack {
                     ScrollView {
                         VStack {
-                            StatusBar(viewModel: viewModel)
+                            StatusBar(viewModel: viewModel, resetAnimationStates: resetAnimationStates)
                             
                             Spacer()
                                 .frame(height: 40)
@@ -48,7 +49,7 @@ struct ContentView: View {
 
                     VStack {
                         Spacer()
-                        ControlBar(viewModel: viewModel, isAutoMode: $isAutoMode, autoModeStep: $autoModeStep)
+                        ControlBar(viewModel: viewModel, isAutoMode: $isAutoMode, autoModeStep: $autoModeStep, resetAnimationStates: resetAnimationStates)
                             .frame(maxWidth: .infinity)
                             .background(Color.gray.opacity(0.2))
                     }
@@ -67,6 +68,9 @@ struct ContentView: View {
                 }
                 .onReceive(viewModel.$introducingObject) { object in
                     introducingObject = object
+                }
+                .onReceive(viewModel.$correctAnswerObjectWasSelected) { object in
+                    correctAnswerObjectWasSelected = object
                 }
             }
             .onAppear {
@@ -160,8 +164,7 @@ struct ContentView: View {
         @State var offset: CGSize = .zero
         
         GeometryReader { geometry in
-//            let screenCenter = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
-            Group {
+            ZStack {
                 if let videoName = object.videoName {
                     VideoPlayerView(videoName: videoName)
                         .aspectRatio(contentMode: .fill)
@@ -179,33 +182,27 @@ struct ContentView: View {
             .shadow(color: .gray, radius: 4, x: 2, y: 2)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(highlightedObject == object ? Color.red : (viewModel.correctAnswerObjectWasSelected == object ? Color.green : Color.clear), lineWidth: 4)
+                    .stroke(highlightedObject == object ? Color.red : (correctAnswerObjectWasSelected == object ? Color.green : Color.clear), lineWidth: 4)
             )
             .scaleEffect(introducingObject == object ? scaleFactor : 1.0)
-            //.scaleEffect(introducingObject == object ? 2.0 : 1.0)
             .offset(introducingObject == object ? CGSize(
                 width: screenCenter.x - geometry.frame(in: .global).midX,
                 height: screenCenter.y - geometry.frame(in: .global).midY
             ) : offset)
-//            .offset(x: introducingObject == object ? CGFloat(259) : 0, y: introducingObject == object ? CGFloat(376) : 0)
-            .scaleEffect(highlightedObject == object || viewModel.correctAnswerObjectWasSelected == object ? 1.1 : 1.0)
-            //        .animation(.easeInOut(duration: 0.3), value: highlightedObject)
-            //        .animation(.easeInOut(duration: 0.3), value: viewModel.correctAnswerObjectWasSelected)
-            
-            //.position(x: 0, y: 0)
-//            .position(x: introducingObject == object ? 400 : 0, y: introducingObject == object ? 200 : 0)
+            .scaleEffect(highlightedObject == object || correctAnswerObjectWasSelected == object ? 1.1 : 1.0)
             .animation(.easeInOut, value: highlightedObject)
-            .animation(.easeInOut, value: viewModel.correctAnswerObjectWasSelected)
+            .animation(.easeInOut, value: correctAnswerObjectWasSelected)
             .shadow(color: introducingObject == object ? .primary : .clear, radius: introducingObject == object ? 70 : 0)
             .animation(.easeOut, value: introducingObject)
             .opacity(viewModel.grayedOutObjects.contains(object) ? 0.2 : 1.0)
+            .contentShape(Rectangle()) // Ensure only the visible part is tappable
             .onTapGesture {
                 if !viewModel.grayedOutObjects.contains(object) {
                     viewModel.checkAnswer(selectedObject: object)
+                    resetAnimationStates()
                 }
             }
             .allowsHitTesting(!viewModel.grayedOutObjects.contains(object))
-            
         }
     }
     
@@ -213,10 +210,18 @@ struct ContentView: View {
         let targetSize = min(screenSize.width, screenSize.height) * 0.8
         return targetSize / itemSize
     }
+    
+    func resetAnimationStates() {
+        print("Resetting animation states")
+        highlightedObject = nil
+        correctAnswerObjectWasSelected = nil
+        introducingObject = nil
+    }
 }
 
 struct StatusBar: View {
     @ObservedObject var viewModel: LearningViewModel
+    let resetAnimationStates: () -> Void
     
     var body: some View {
         ZStack{
@@ -227,13 +232,19 @@ struct StatusBar: View {
                 Text(viewModel.currentPrompt)
                 .font(.title)
                 .foregroundColor(.white)
+                .onTapGesture {
+                    resetAnimationStates()
+                }
             }
             HStack{
                 Spacer()
-                Text("You can do it!")
+                Text("")
                 .font(.headline)
                 .foregroundColor(.white)
                 .padding(.trailing)
+                .onTapGesture {
+                    resetAnimationStates()
+                }
             }
         }
         .padding()
@@ -246,10 +257,12 @@ struct ControlBar: View {
     @ObservedObject var viewModel: LearningViewModel
     @Binding var isAutoMode: Bool
     @Binding var autoModeStep: Int
+    let resetAnimationStates: () -> Void
     
     var body: some View {
         HStack(spacing: 0) {
             Button(action: {
+                resetAnimationStates()
                 viewModel.introduceNextObject(completion: {})
             }) {
                 Image(systemName: "plus.diamond")
@@ -259,6 +272,7 @@ struct ControlBar: View {
                     .background(Color.blue)
             }
             Button(action: {
+                resetAnimationStates()
                 viewModel.askQuestion(completion: {})
             }) {
                 Image(systemName: "questionmark.bubble")
@@ -268,6 +282,7 @@ struct ControlBar: View {
                     .background(Color.green)
             }
             Button(action: {
+                resetAnimationStates()
                 viewModel.shuffleCurrentObjects()
             }) {
                 Image(systemName: "restart.circle.fill")
@@ -277,6 +292,7 @@ struct ControlBar: View {
                     .background(Color.red)
             }
             Button(action: {
+                resetAnimationStates()
                 viewModel.isAutoMode = true
                 viewModel.autoModeStep = 0
                 viewModel.continueAutoMode()
@@ -288,6 +304,7 @@ struct ControlBar: View {
                     .background(Color.orange)
             }
             Button(action: {
+                resetAnimationStates()
                 // Repeat action to be implemented
             }) {
                 Image(systemName: "repeat.circle.fill")
@@ -297,6 +314,7 @@ struct ControlBar: View {
                     .background(Color.purple)
             }
             Button(action: {
+                resetAnimationStates()
                 viewModel.isAutoMode = false
             }) {
                 Image(systemName: "pause.circle.fill")
