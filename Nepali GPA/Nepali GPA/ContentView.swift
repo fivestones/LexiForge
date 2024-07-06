@@ -3,6 +3,8 @@ import SwiftUI
 struct ContentView: View {
     @StateObject var viewModel = LearningViewModel()
     @State private var highlightedObject: LearningObject?
+    @State private var introducingObject: LearningObject?
+    @State private var introductionFinished: LearningObject?
     @State private var itemSize: CGFloat = 0
     @State private var columns: Int = 1
     @State private var verticalSpacing: CGFloat = 0
@@ -11,52 +13,67 @@ struct ContentView: View {
     @State private var isAutoMode: Bool = false
     @State private var autoModeStep: Int = 0
     
+    @State private var screenCenter: CGPoint = .zero
+    
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.verticalSizeClass) var verticalSizeClass
 
     var body: some View {
         GeometryReader { geometry in
-            ZStack {
-                ScrollView {
-                    VStack {
-                        StatusBar(viewModel: viewModel)
-                        
-                        Spacer()
-                            .frame(height: 40)
+            VStack {
+                ZStack {
+                    ScrollView {
+                        VStack {
+                            StatusBar(viewModel: viewModel)
+                            
+                            Spacer()
+                                .frame(height: 40)
 
-                        // Create the grid layout with the calculated number of columns
-                        let gridItems = Array(repeating: GridItem(.fixed(itemSize), spacing: horizontalSpacing), count: columns)
+                            // Create the grid layout with the calculated number of columns
+                            let gridItems = Array(repeating: GridItem(.fixed(itemSize), spacing: horizontalSpacing), count: columns)
 
-                        // LazyVGrid to display objects in a grid
-                        LazyVGrid(columns: gridItems, spacing: verticalSpacing) {
-                            ForEach(viewModel.currentObjects, id: \.name) { object in
-                                objectView(for: object)
-                                    .frame(width: itemSize, height: itemSize) // Set the frame size for each object
+                            // LazyVGrid to display objects in a grid
+                            LazyVGrid(columns: gridItems, spacing: verticalSpacing) {
+                                ForEach(viewModel.currentObjects, id: \.name) { object in
+                                    objectView(for: object, screenCenter: screenCenter)
+                                        .frame(width: itemSize, height: itemSize) // Set the frame size for each object
+                                }
                             }
-                        }
-                        .padding(.horizontal, horizontalSpacing) // Add horizontal padding to the grid
+                            .padding(.horizontal, horizontalSpacing) // Add horizontal padding to the grid
 
-                        Spacer().frame(height: 70) // Add space to ensure content is not hidden behind the control bar
+                            Spacer().frame(height: 70) // Add space to ensure content is not hidden behind the control bar
+                        }
+                    }
+
+                    VStack {
+                        Spacer()
+                        ControlBar(viewModel: viewModel, isAutoMode: $isAutoMode, autoModeStep: $autoModeStep)
+                            .frame(maxWidth: .infinity)
+                            .background(Color.gray.opacity(0.2))
                     }
                 }
-
-                VStack {
-                    Spacer()
-                    ControlBar(viewModel: viewModel, isAutoMode: $isAutoMode, autoModeStep: $autoModeStep)
-                        .frame(maxWidth: .infinity)
-                        .background(Color.gray.opacity(0.2))
+                .onAppear {
+                    // Use screen dimensions for initial layout calculation
+                    updateLayout(for: geometry.size)
+                }
+                .onChange(of: geometry.size) { newSize in
+                    // Recalculate layout when size changes (orientation change)
+                    updateLayout(for: newSize)
+                }
+                .onReceive(viewModel.$highlightedObject) { object in
+                    highlightedObject = object
+                }
+                .onReceive(viewModel.$introducingObject) { object in
+                    introducingObject = object
                 }
             }
             .onAppear {
-                // Use screen dimensions for initial layout calculation
-                updateLayout(for: geometry.size)
-            }
-            .onChange(of: geometry.size) { newSize in
-                // Recalculate layout when size changes (orientation change)
-                updateLayout(for: newSize)
-            }
-            .onReceive(viewModel.$highlightedObject) { object in
-                highlightedObject = object
+                screenCenter = CGPoint(
+//                    x: geometry.size.width / 2,
+//                    y: geometry.size.height / 2
+                    x: UIScreen.main.bounds.width / 2,
+                    y: UIScreen.main.bounds.height / 2
+                )
             }
         }
     }
@@ -136,39 +153,60 @@ struct ContentView: View {
     }
 
     @ViewBuilder
-    func objectView(for object: LearningObject) -> some View {
-        Group {
-            if let videoName = object.videoName {
-                VideoPlayerView(videoName: videoName)
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: itemSize, height: itemSize)
-                    .clipped()
-            } else if let imageName = object.imageName {
-                Image(imageName)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: itemSize, height: itemSize)
-                    .clipped()
+    func objectView(for object: LearningObject, screenCenter: CGPoint) -> some View {
+        @State var offset: CGSize = .zero
+        
+        GeometryReader { geometry in
+//            let screenCenter = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
+            Group {
+                if let videoName = object.videoName {
+                    VideoPlayerView(videoName: videoName)
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: itemSize, height: itemSize)
+                        .clipped()
+                } else if let imageName = object.imageName {
+                    Image(imageName)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: itemSize, height: itemSize)
+                        .clipped()
+                }
+            }
+            .cornerRadius(12)
+            .shadow(color: .gray, radius: 4, x: 2, y: 2)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(highlightedObject == object ? Color.red : (viewModel.correctAnswerObjectWasSelected == object ? Color.green : Color.clear), lineWidth: 4)
+            )
+            .scaleEffect(introducingObject == object ? 2.0 : 1.0)
+            .offset(introducingObject == object ? CGSize(
+                width: screenCenter.x - geometry.frame(in: .global).midX,
+                height: screenCenter.y - geometry.frame(in: .global).midY
+            ) : offset)
+//            .offset(x: introducingObject == object ? CGFloat(259) : 0, y: introducingObject == object ? CGFloat(376) : 0)
+            .scaleEffect(highlightedObject == object || viewModel.correctAnswerObjectWasSelected == object ? 1.1 : 1.0)
+            //        .animation(.easeInOut(duration: 0.3), value: highlightedObject)
+            //        .animation(.easeInOut(duration: 0.3), value: viewModel.correctAnswerObjectWasSelected)
+            
+            //.position(x: 0, y: 0)
+//            .position(x: introducingObject == object ? 400 : 0, y: introducingObject == object ? 200 : 0)
+            .animation(.easeInOut, value: highlightedObject)
+            .animation(.easeInOut, value: viewModel.correctAnswerObjectWasSelected)
+            .animation(.easeOut, value: introducingObject)
+            .opacity(viewModel.grayedOutObjects.contains(object) ? 0.2 : 1.0)
+            .onTapGesture {
+                if !viewModel.grayedOutObjects.contains(object) {
+                    viewModel.checkAnswer(selectedObject: object)
+                }
+            }
+            .allowsHitTesting(!viewModel.grayedOutObjects.contains(object))
+            .onAppear{
+                print ("width: \(screenCenter.x), geometry.frame(in: .global).midX: \(geometry.frame(in: .global).midX)")
+                print("height: \(screenCenter.y), geometry.frame(in: .global).midY: \(geometry.frame(in: .global).midY)")
+                print("x offset: \(screenCenter.x - geometry.frame(in: .global).midX)")
+                print("y offset: \(screenCenter.y - geometry.frame(in: .global).midY)")
             }
         }
-        .cornerRadius(12)
-        .shadow(color: .gray, radius: 4, x: 2, y: 2)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(highlightedObject == object ? Color.red : (viewModel.correctAnswerObjectWasSelected == object ? Color.green : Color.clear), lineWidth: 4)
-        )
-        .scaleEffect(highlightedObject == object || viewModel.correctAnswerObjectWasSelected == object ? 1.1 : 1.0)
-//        .animation(.easeInOut(duration: 0.3), value: highlightedObject)
-//        .animation(.easeInOut(duration: 0.3), value: viewModel.correctAnswerObjectWasSelected)
-        .animation(.easeInOut, value: highlightedObject)
-        .animation(.easeInOut, value: viewModel.correctAnswerObjectWasSelected)
-        .opacity(viewModel.grayedOutObjects.contains(object) ? 0.2 : 1.0)
-        .onTapGesture {
-            if !viewModel.grayedOutObjects.contains(object) {
-                viewModel.checkAnswer(selectedObject: object)
-            }
-        }
-        .allowsHitTesting(!viewModel.grayedOutObjects.contains(object))
     }
 }
 

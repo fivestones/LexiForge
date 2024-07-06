@@ -17,18 +17,18 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
-         contextName = "closure #3 in LearningViewModel.continueAutoMode():LearningViewModel.swift">
-         <PersistentStrings>
-            <PersistentString
-               value = "autoModeStep">
-            </PersistentString>
-         </PersistentStrings>
-      </ContextState>
-      <ContextState
          contextName = "mach_msg2_trap:(null)">
          <PersistentStrings>
             <PersistentString
                value = "score">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "closure #3 in LearningViewModel.continueAutoMode():LearningViewModel.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "autoModeStep">
             </PersistentString>
          </PersistentStrings>
       </ContextState>
@@ -39,6 +39,14 @@
          contextName = "closure #1 in LearningViewModel.selectNextObjectToAsk():LearningViewModel.swift">
       </ContextState>
       <ContextState
+         contextName = "closure #4 in closure #1 in ContentView.body.getter:ContentView.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "UIDevice.current.orientation">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
          contextName = "closure #1 in Nepali_GPAApp.body.getter:Nepali_GPAApp.swift">
          <PersistentStrings>
             <PersistentString
@@ -47,10 +55,35 @@
          </PersistentStrings>
       </ContextState>
       <ContextState
-         contextName = "closure #4 in closure #1 in ContentView.body.getter:ContentView.swift">
+         contextName = "ContentView.objectView(for:):ContentView.swift">
          <PersistentStrings>
             <PersistentString
-               value = "UIDevice.current.orientation">
+               value = "introducingObject">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "closure #1 in closure #1 in closure #1 in closure #1 in closure #1 in closure #1 in ContentView.body.getter:ContentView.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "geometry.size.height">
+            </PersistentString>
+            <PersistentString
+               value = "geometry.size.width">
+            </PersistentString>
+            <PersistentString
+               value = "CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)">
+            </PersistentString>
+         </PersistentStrings>
+      </ContextState>
+      <ContextState
+         contextName = "LearningViewModel.introduceNextObject(completion:):LearningViewModel.swift">
+         <PersistentStrings>
+            <PersistentString
+               value = "currentObjects.last">
+            </PersistentString>
+            <PersistentString
+               value = "currentObjects.first">
             </PersistentString>
          </PersistentStrings>
       </ContextState>

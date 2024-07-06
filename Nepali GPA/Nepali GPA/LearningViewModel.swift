@@ -19,6 +19,8 @@ class LearningViewModel: ObservableObject {
     @Published var currentObjects: [LearningObject] = []
     @Published var currentPrompt: String = ""
     @Published var highlightedObject: LearningObject?
+    @Published var introducingObject: LearningObject?
+    @Published var introductionFinished: LearningObject?
     @Published var targetWord: String?
     @Published var attempts: Int = 0 // property for counting attempts
     @Published var grayedOutObjects: [LearningObject] = []
@@ -36,10 +38,9 @@ class LearningViewModel: ObservableObject {
             var newObject = objects[currentObjects.count]
             newObject.introducedHistory = Date() // Set the introduction date
             currentObjects.append(newObject)
+            self.introducingObject = currentObjects.last
             currentPrompt = "यो \(newObject.nepaliName) हो।"
-            playSoundsSequentially(sounds: [newObject.thisIsAudioFileName], type: "m4a") {
-                completion()
-            }
+            playSoundsSequentially(sounds: [newObject.thisIsAudioFileName], type: "m4a", completion: {self.introducingObject = nil}) 
         } else {
             completion()
         }
