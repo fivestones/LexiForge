@@ -14,7 +14,6 @@ class LearningViewModel: ObservableObject {
         LearningObject(name: "buffalo", nepaliName: "भैंसी", imageName: "buffalo", videoName: nil, thisIsAudioFileName: "this_is_a-buffalo", negativeAudioFileName: "negative_response_buffalo", whereIsAudioFileName: "where_is_buffalo"),
         LearningObject(name: "pig", nepaliName: "सुँगुर", imageName: "pig", videoName: nil, thisIsAudioFileName: "this_is_a-pig", negativeAudioFileName: "negative_response_pig", whereIsAudioFileName: "where_is_pig"),
         LearningObject(name: "deer", nepaliName: "हिरण", imageName: "deer", videoName: nil, thisIsAudioFileName: "this_is_a-deer", negativeAudioFileName: "negative_response_deer", whereIsAudioFileName: "where_is_deer"),
-        LearningObject(name: "alligator", nepaliName: "गोही", imageName: "alligator", videoName: nil, thisIsAudioFileName: "this_is_a-alligator", negativeAudioFileName: "negative_response_alligator", whereIsAudioFileName: "where_is_alligator")
     ]
     @Published var currentObjects: [LearningObject] = []
     @Published var currentPrompt: String = ""

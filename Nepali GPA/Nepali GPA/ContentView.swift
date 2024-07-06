@@ -14,6 +14,7 @@ struct ContentView: View {
     @State private var autoModeStep: Int = 0
     
     @State private var screenCenter: CGPoint = .zero
+    @State private var scaleFactor: CGFloat = 2.0
     
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.verticalSizeClass) var verticalSizeClass
@@ -59,6 +60,7 @@ struct ContentView: View {
                 .onChange(of: geometry.size) { newSize in
                     // Recalculate layout when size changes (orientation change)
                     updateLayout(for: newSize)
+                    scaleFactor = calculateScaleFactor(screenSize: newSize, itemSize: itemSize)
                 }
                 .onReceive(viewModel.$highlightedObject) { object in
                     highlightedObject = object
@@ -74,6 +76,7 @@ struct ContentView: View {
                     x: UIScreen.main.bounds.width / 2,
                     y: UIScreen.main.bounds.height / 2
                 )
+                scaleFactor = calculateScaleFactor(screenSize: geometry.size, itemSize: itemSize)
             }
         }
     }
@@ -178,7 +181,8 @@ struct ContentView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(highlightedObject == object ? Color.red : (viewModel.correctAnswerObjectWasSelected == object ? Color.green : Color.clear), lineWidth: 4)
             )
-            .scaleEffect(introducingObject == object ? 2.0 : 1.0)
+            .scaleEffect(introducingObject == object ? scaleFactor : 1.0)
+            //.scaleEffect(introducingObject == object ? 2.0 : 1.0)
             .offset(introducingObject == object ? CGSize(
                 width: screenCenter.x - geometry.frame(in: .global).midX,
                 height: screenCenter.y - geometry.frame(in: .global).midY
@@ -192,6 +196,7 @@ struct ContentView: View {
 //            .position(x: introducingObject == object ? 400 : 0, y: introducingObject == object ? 200 : 0)
             .animation(.easeInOut, value: highlightedObject)
             .animation(.easeInOut, value: viewModel.correctAnswerObjectWasSelected)
+            .shadow(color: introducingObject == object ? .primary : .clear, radius: introducingObject == object ? 70 : 0)
             .animation(.easeOut, value: introducingObject)
             .opacity(viewModel.grayedOutObjects.contains(object) ? 0.2 : 1.0)
             .onTapGesture {
@@ -200,13 +205,13 @@ struct ContentView: View {
                 }
             }
             .allowsHitTesting(!viewModel.grayedOutObjects.contains(object))
-            .onAppear{
-                print ("width: \(screenCenter.x), geometry.frame(in: .global).midX: \(geometry.frame(in: .global).midX)")
-                print("height: \(screenCenter.y), geometry.frame(in: .global).midY: \(geometry.frame(in: .global).midY)")
-                print("x offset: \(screenCenter.x - geometry.frame(in: .global).midX)")
-                print("y offset: \(screenCenter.y - geometry.frame(in: .global).midY)")
-            }
+            
         }
+    }
+    
+    func calculateScaleFactor(screenSize: CGSize, itemSize: CGFloat) -> CGFloat {
+        let targetSize = min(screenSize.width, screenSize.height) * 0.8
+        return targetSize / itemSize
     }
 }
 
