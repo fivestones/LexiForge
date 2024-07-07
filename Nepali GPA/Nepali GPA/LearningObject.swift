@@ -73,40 +73,40 @@ struct LearningObject: Equatable {
             let multiplier: Double
             switch interaction.type {
             case .answeredCorrectly:
-                print(".answeredCorrectly")
+//                print(".answeredCorrectly")
                 if index == 0 {
-                    print("multiplier of 1.3225")
+//                    print("multiplier of 1.3225")
                     multiplier = 1.3225
                 } else if index == 1 {
-                    print("multiplier of 1.265")
+//                    print("multiplier of 1.265")
                     multiplier = 1.265
                 } else if index == 2 {
-                    print("multiplier of 1.2075")
+//                    print("multiplier of 1.2075")
                     multiplier = 1.2075
                 } else {
-                    print("multiplier of 1.15")
+//                    print("multiplier of 1.15")
                     multiplier = 1.15
                 }
             case .answeredIncorrectly, .objectNotKnown:
-                print(".answeredIncorrectly or .objectNotKnown")
+//                print(".answeredIncorrectly or .objectNotKnown")
                 if index == 0 {
-                    print("multiplier of 0.7225")
+//                    print("multiplier of 0.7225")
                     multiplier = 0.7225
                 } else if index == 1 {
-                    print("multiplier of 0.765")
+//                    print("multiplier of 0.765")
                     multiplier = 0.765
                 } else if index == 2 {
-                    print("multiplier of 0.8075")
+//                    print("multiplier of 0.8075")
                     multiplier = 0.8075
                 } else {
-                    print("multiplier of 0.85")
+//                    print("multiplier of 0.85")
                     multiplier = 0.85
                 }
             }
 
             // Apply the multiplier to the score
             score *= multiplier
-            print("Score after multiplying by multiplier (\(multiplier)): \(score)")
+//            print("Score after multiplying by multiplier (\(multiplier)): \(score)")
         }
 
         return score

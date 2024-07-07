@@ -14,6 +14,7 @@ class LearningViewModel: ObservableObject {
         LearningObject(name: "buffalo", nepaliName: "भैंसी", imageName: "buffalo", videoName: nil, thisIsAudioFileName: "this_is_a-buffalo", negativeAudioFileName: "negative_response_buffalo", whereIsAudioFileName: "where_is_buffalo"),
         LearningObject(name: "pig", nepaliName: "सुँगुर", imageName: "pig", videoName: nil, thisIsAudioFileName: "this_is_a-pig", negativeAudioFileName: "negative_response_pig", whereIsAudioFileName: "where_is_pig"),
         LearningObject(name: "deer", nepaliName: "हिरण", imageName: "deer", videoName: nil, thisIsAudioFileName: "this_is_a-deer", negativeAudioFileName: "negative_response_deer", whereIsAudioFileName: "where_is_deer"),
+        LearningObject(name: "alligator", nepaliName: "गोही", imageName: "alligator", videoName: nil, thisIsAudioFileName: "this_is_a-alligator", negativeAudioFileName: "negative_response_alligator", whereIsAudioFileName: "where_is_alligator")
     ]
     @Published var currentObjects: [LearningObject] = []
     @Published var currentPrompt: String = ""
@@ -35,6 +36,7 @@ class LearningViewModel: ObservableObject {
         var continuePlaying = true
 
     func introduceNextObject(completion: @escaping () -> Void) {
+        print("in introduceNextObject, stopping current audio")
         stopCurrentAudio()
         if currentObjects.count < objects.count {
             var newObject = objects[currentObjects.count]
@@ -42,7 +44,11 @@ class LearningViewModel: ObservableObject {
             currentObjects.append(newObject)
             self.introducingObject = currentObjects.last
             currentPrompt = "यो \(newObject.nepaliName) हो।"
-            playSoundsSequentially(sounds: [newObject.thisIsAudioFileName], type: "m4a", completion: {self.introducingObject = nil}) 
+            // playSoundsSequentially(sounds: [newObject.thisIsAudioFileName], type: "m4a", completion: {self.introducingObject = nil})
+            playSoundsSequentially(sounds: [newObject.thisIsAudioFileName], type: "m4a", completion:  {
+                self.introducingObject = nil
+                completion()
+            })
         } else {
             completion()
         }
@@ -50,21 +56,26 @@ class LearningViewModel: ObservableObject {
     
     func askQuestion(completion: @escaping () -> Void) {
         if isQuestionAudioPlaying {
-                // If the question audio is playing, do nothing
-                return
-            }
+            // If the question audio is playing, do nothing
+            print("question audio is still playing, so not asking another question")
+            return
+        }
         stopCurrentAudio()
         guard !currentObjects.isEmpty else { return }
         
         if let currentQuestionObject = currentQuestionObject {
             // If there is a current question object and audio has finished, repeat the question audio
+            print("There is a currentQuestionObject, so just repeating the question")
             currentPrompt = "\(currentQuestionObject.nepaliName) कहाँ छ?"
             isQuestionAudioPlaying = true
             playSoundsSequentially(sounds: [currentQuestionObject.whereIsAudioFileName], type: "m4a", completion:  {
                 self.isQuestionAudioPlaying = false
+                print("set isQuestionAudioPlaying to false after repeat question")
                 completion()
             })
             return
+        } else {
+            print("there is not a currentQuestionObject, so will ask a new question")
         }
         
         // Select a new question if no currentQuestionObject
@@ -79,15 +90,26 @@ class LearningViewModel: ObservableObject {
         isQuestionAudioPlaying = true
         playSoundsSequentially(sounds: [selectedObject.whereIsAudioFileName], type: "m4a", completion:  {
             self.isQuestionAudioPlaying = false
+            print("set isQuestionAudioPlaying to false after new question")
+            
             completion()
         })
     }
     
     func continueAutoMode() {
+        if (currentObjects.count == 1 && autoModeStep == 0) {
+            // There was already one object and we are just starting autoMode for the first time, so setting autoModeStep to 1
+            autoModeStep = 1
+        }
+        if (currentObjects.count > 1 && autoModeStep == 0) {
+            // There were already two object and we are just starting autoMode for the first time, so setting autoModeStep to 2
+            autoModeStep = 2
+        }
         switch autoModeStep {
         case 0:
             introduceNextObject {
                 self.autoModeStep += 1
+//                print("audoModeStep: \(self.autoModeStep)")
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                     self.introduceNextObject {
                         self.autoModeStep += 1
@@ -95,10 +117,16 @@ class LearningViewModel: ObservableObject {
                     }
                 }
             }
-        case let x where x > 0:
+        case 1:
+            // We got here because there was already one object but not two
+            self.introduceNextObject {
+                self.autoModeStep += 1
+                self.continueAutoMode()
+            }
+        case let x where x > 1:
             if checkCompetency() {
                 introduceNextObject {
-                    self.autoModeStep = 1
+                    self.autoModeStep += 1
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                         self.continueAutoMode()
                     }
@@ -106,7 +134,7 @@ class LearningViewModel: ObservableObject {
             } else {
                 askQuestion {
                     self.autoModeStep += 1
-//                    self.continueAutoMode()
+                    //self.continueAutoMode()
                 }
             }
         default:
@@ -115,7 +143,7 @@ class LearningViewModel: ObservableObject {
     }
 
     func checkCompetency() -> Bool {
-        print("Checking competency")
+//        print("Checking competency")
         // Create a mutable copy of currentObjects to work with
         var mutableCurrentObjects = currentObjects
 
@@ -124,23 +152,23 @@ class LearningViewModel: ObservableObject {
             var object = $0
             return object.calculateLearnerCompetencyScore() >= 400
         }
-        print("allObjectsCompetent: \(allObjectsCompetent)")
+//        print("allObjectsCompetent: \(allObjectsCompetent)")
 
         // Check if the most recent object was answered correctly the last two times
         guard let lastIntroducedObject = mutableCurrentObjects.last else { return false }
         let lastTwoInteractions = lastIntroducedObject.history.suffix(2)
         let lastTwoCorrect = lastTwoInteractions.count == 2 && lastTwoInteractions.allSatisfy { $0.type == .answeredCorrectly }
-        print("lastTwoCorrect: \(lastTwoCorrect)")
+//        print("lastTwoCorrect: \(lastTwoCorrect)")
         
         // Check if at least 90% of the objects have been asked about at least once since the last object was introduced
         let objectsAskedSinceLast = mutableCurrentObjects.filter {
             var object = $0
             return object.askedHistory.last ?? Date.distantPast > (lastIntroducedObject.introducedHistory ?? Date.distantPast)
         }
-        print("objectsAskedSinceLast: \(objectsAskedSinceLast.count)")
-        print("currentObjects: \(currentObjects.count)")
+//        print("objectsAskedSinceLast: \(objectsAskedSinceLast.count)")
+//        print("currentObjects: \(currentObjects.count)")
         let ninetyPercentAsked = Double(objectsAskedSinceLast.count) / Double(mutableCurrentObjects.count) >= 0.9
-        print("ninetyPercentAsked: \(ninetyPercentAsked)")
+//        print("ninetyPercentAsked: \(ninetyPercentAsked)")
         
         return allObjectsCompetent && lastTwoCorrect && ninetyPercentAsked
     }
@@ -149,15 +177,20 @@ class LearningViewModel: ObservableObject {
         print("Checking answer for: \(selectedObject.name)")
         guard let targetName = targetWord else {
             print("No target word set")
+            if (isAutoMode) {
+                continueAutoMode()
+            }
             return
         }
         print("Target name: \(targetName)")
         if let correctObject = currentObjects.first(where: { $0.nepaliName == targetName }) {
-            print("Correct object: \(correctObject.nepaliName)")
+//            print("Correct object: \(correctObject.nepaliName)")
             if selectedObject.name == correctObject.name {
                 print("Correct answer selected")
                 currentPrompt = "शाबास"
                 targetWord = nil
+                currentQuestionObject = nil // Reset the current question object
+                print("in checkAnswer, got it right. currentQuestionObject reset to \(currentQuestionObject)")
                 recordInteraction(for: correctObject, type: .answeredCorrectly)
                 attempts = 0 // Reset attempts after a correct answer
                 correctAnswerObjectWasSelected = correctObject // Set the correct answer object
@@ -172,7 +205,6 @@ class LearningViewModel: ObservableObject {
                         if self?.isAutoMode == true {
                             self?.continueAutoMode()
                         }
-                        self?.currentQuestionObject = nil // Reset the current question object
                     }
                 )
             } else {
@@ -218,7 +250,7 @@ class LearningViewModel: ObservableObject {
     }
     
     private func recordAskedInteraction(for object: LearningObject) {
-        print("in recordAskedInteraction function")
+//        print("in recordAskedInteraction function")
         if let index = currentObjects.firstIndex(where: { $0.name == object.name }) {
             currentObjects[index].askedHistory.append(Date())
             print("recorded asked interaction for \(object.name)")
@@ -242,14 +274,14 @@ class LearningViewModel: ObservableObject {
 
         // Calculate learner competency scores
         var rawCompetencyScores: [Double] = []
-        print("*********")
-        print("Learner competency scores calculation time")
+//        print("*********")
+//        print("Learner competency scores calculation time")
         for var object in currentObjects {
-            print("Calculating score for \(object.name)")
+//            print("Calculating score for \(object.name)")
             let score = object.calculateLearnerCompetencyScore()
             rawCompetencyScores.append(score)
         }
-        print("*********")
+//        print("*********")
         let maxCompetencyScore = rawCompetencyScores.max() ?? 180.0 // Ensure there's a max score to avoid division by zero
         let normalizedCompetencyScores = rawCompetencyScores.map { $0 / maxCompetencyScore }
         let invertedCompetencyScores = normalizedCompetencyScores.map { 1.0 - $0 }
@@ -385,6 +417,8 @@ class LearningViewModel: ObservableObject {
     }
     
     private func stopCurrentAudio() {
+        print("stoping current audio and setting isQuestionAudioPlaying to false")
+        isQuestionAudioPlaying = false
         continuePlaying = false
         audioQueuePlayer?.pause()
         audioQueuePlayer = nil

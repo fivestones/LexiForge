@@ -198,8 +198,10 @@ struct ContentView: View {
             .contentShape(Rectangle()) // Ensure only the visible part is tappable
             .onTapGesture {
                 if !viewModel.grayedOutObjects.contains(object) {
-                    viewModel.checkAnswer(selectedObject: object)
-                    resetAnimationStates()
+                    if introducingObject == nil {
+                        viewModel.checkAnswer(selectedObject: object)
+                        resetAnimationStates()
+                    }
                 }
             }
             .allowsHitTesting(!viewModel.grayedOutObjects.contains(object))
