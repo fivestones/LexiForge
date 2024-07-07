@@ -30,6 +30,7 @@ class LearningViewModel: ObservableObject {
     @Published var autoModeStep: Int = 0 // Variable to track progress along the auto mode pathway
     @Published var isQuestionAudioPlaying: Bool = false
     @Published var currentQuestionObject: LearningObject? = nil
+    @Published var currentIntroductionObject: LearningObject? = nil // An object has been introduced. No question has been asked yet.
     
         var currentAudioPlayer: AVAudioPlayer?
         var audioQueuePlayer: AVQueuePlayer?
@@ -43,6 +44,7 @@ class LearningViewModel: ObservableObject {
             newObject.introducedHistory = Date() // Set the introduction date
             currentObjects.append(newObject)
             self.introducingObject = currentObjects.last
+            currentIntroductionObject = currentObjects.last
             currentPrompt = "यो \(newObject.nepaliName) हो।"
             // playSoundsSequentially(sounds: [newObject.thisIsAudioFileName], type: "m4a", completion: {self.introducingObject = nil})
             playSoundsSequentially(sounds: [newObject.thisIsAudioFileName], type: "m4a", completion:  {
@@ -61,6 +63,7 @@ class LearningViewModel: ObservableObject {
             return
         }
         stopCurrentAudio()
+        currentIntroductionObject = nil
         guard !currentObjects.isEmpty else { return }
         
         if let currentQuestionObject = currentQuestionObject {
@@ -172,6 +175,20 @@ class LearningViewModel: ObservableObject {
         
         return allObjectsCompetent && lastTwoCorrect && ninetyPercentAsked
     }
+    
+    func replayCurrentPrompt() {
+        if currentQuestionObject != nil {
+            // There is a current question, so play it.
+            askQuestion(completion: {})
+        } else if currentIntroductionObject != nil {
+            if let lastObject = currentObjects.last {
+                playSoundsSequentially(sounds: [lastObject.thisIsAudioFileName], type: "m4a", completion:  {
+                    self.introducingObject = nil
+                })
+            }
+        }
+    }
+    
     func checkAnswer(selectedObject: LearningObject) {
         stopCurrentAudio()
         print("Checking answer for: \(selectedObject.name)")

@@ -236,6 +236,7 @@ struct StatusBar: View {
                 .foregroundColor(.white)
                 .onTapGesture {
                     resetAnimationStates()
+                    viewModel.replayCurrentPrompt()
                 }
             }
             HStack{
