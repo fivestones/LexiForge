@@ -1,7 +1,9 @@
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
-    @StateObject var viewModel = LearningViewModel()
+    @Environment(\.modelContext) private var modelContext
+    @StateObject private var viewModel: LearningViewModel
     @State private var highlightedObject: LearningObject?
     @State private var correctAnswerObjectWasSelected: LearningObject?
     @State private var introducingObject: LearningObject?
@@ -19,6 +21,10 @@ struct ContentView: View {
     
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.verticalSizeClass) var verticalSizeClass
+    
+    init(modelContext: ModelContext) {
+        _viewModel = StateObject(wrappedValue: LearningViewModel(modelContext: modelContext))
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -92,7 +98,7 @@ struct ContentView: View {
         columns = layout.columns
         
         // Calculate the number of rows
-        let rows = Int(ceil(Double(viewModel.objects.count) / Double(columns)))
+        let rows = Int(ceil(Double(viewModel.allObjects.count) / Double(columns)))
 
         // Calculate the optimal spacing
         let availableWidth = size.width// - 64 // Subtract horizontal padding
@@ -120,7 +126,7 @@ struct ContentView: View {
         let textHeight: CGFloat = 60 // Approximate height for the text at the top
 
         // Determine the number of objects
-        let objectCount = viewModel.objects.count // Get the total number of objects in viewModel.objects
+        let objectCount = viewModel.allObjects.count // Get the total number of objects in viewModel.objects
 
         // Calculate available width and height
         let availableWidth = size.width - horizontalPadding

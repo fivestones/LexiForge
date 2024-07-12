@@ -1,60 +1,123 @@
 import SwiftUI
+import SwiftData
 import AVFoundation
 
+@MainActor
 class LearningViewModel: ObservableObject {
-    @Published var objects: [LearningObject] = [
-        LearningObject(name: "horse", nepaliName: "घोडा", imageName: nil, videoName: "horse", thisIsAudioFileName: "this_is_a-horse", negativeAudioFileName: "negative_response_horse", whereIsAudioFileName: "where_is_horse"),
-        LearningObject(name: "cow", nepaliName: "गाई", imageName: "cow", videoName: nil, thisIsAudioFileName: "this_is_a-cow", negativeAudioFileName: "negative_response_cow", whereIsAudioFileName: "where_is_cow"),
-        LearningObject(name: "sheep", nepaliName: "भेंडा", imageName: "sheep", videoName: nil, thisIsAudioFileName: "this_is_a-sheep", negativeAudioFileName: "negative_response_sheep", whereIsAudioFileName: "where_is_sheep"),
-        LearningObject(name: "goat", nepaliName: "बाख्रा", imageName: "goat", videoName: "goat", thisIsAudioFileName: "this_is_a-goat", negativeAudioFileName: "negative_response_goat", whereIsAudioFileName: "where_is_goat"),
-        LearningObject(name: "dog", nepaliName: "कुकुर", imageName: "dog", videoName: nil, thisIsAudioFileName: "this_is_a-dog", negativeAudioFileName: "negative_response_dog", whereIsAudioFileName: "where_is_dog"),
-        LearningObject(name: "cat", nepaliName: "बिरालो", imageName: "cat", videoName: "cat", thisIsAudioFileName: "this_is_a-cat", negativeAudioFileName: "negative_response_cat", whereIsAudioFileName: "where_is_cat"),
-        LearningObject(name: "tiger", nepaliName: "बाघ", imageName: "tiger", videoName: nil, thisIsAudioFileName: "this_is_a-tiger", negativeAudioFileName: "negative_response_tiger", whereIsAudioFileName: "where_is_tiger"),
-        LearningObject(name: "rhinoceros", nepaliName: "गैडा", imageName: "rhinoceros", videoName: nil, thisIsAudioFileName: "this_is_a-rhinoceros", negativeAudioFileName: "negative_response_rhinoceros", whereIsAudioFileName: "where_is_rhinoceros"),
-        LearningObject(name: "buffalo", nepaliName: "भैंसी", imageName: "buffalo", videoName: nil, thisIsAudioFileName: "this_is_a-buffalo", negativeAudioFileName: "negative_response_buffalo", whereIsAudioFileName: "where_is_buffalo"),
-        LearningObject(name: "pig", nepaliName: "सुँगुर", imageName: "pig", videoName: nil, thisIsAudioFileName: "this_is_a-pig", negativeAudioFileName: "negative_response_pig", whereIsAudioFileName: "where_is_pig"),
-        LearningObject(name: "deer", nepaliName: "हिरण", imageName: "deer", videoName: nil, thisIsAudioFileName: "this_is_a-deer", negativeAudioFileName: "negative_response_deer", whereIsAudioFileName: "where_is_deer"),
-        LearningObject(name: "alligator", nepaliName: "गोही", imageName: "alligator", videoName: nil, thisIsAudioFileName: "this_is_a-alligator", negativeAudioFileName: "negative_response_alligator", whereIsAudioFileName: "where_is_alligator")
-    ]
     @Published var currentObjects: [LearningObject] = []
+    @Published var allObjects: [LearningObject] = []
     @Published var currentPrompt: String = ""
     @Published var highlightedObject: LearningObject?
     @Published var highlightedCorrectObject: LearningObject?
     @Published var introducingObject: LearningObject?
     @Published var introductionFinished: LearningObject?
     @Published var targetWord: String?
-    @Published var attempts: Int = 0 // property for counting attempts
+    @Published var attempts: Int = 0
     @Published var grayedOutObjects: [LearningObject] = []
-    @Published var correctAnswerObjectWasSelected: LearningObject? // Flag to track the correct answer
-    @Published var isAutoMode: Bool = false // State variable for auto mode
-    @Published var autoModeStep: Int = 0 // Variable to track progress along the auto mode pathway
+    @Published var correctAnswerObjectWasSelected: LearningObject?
+    @Published var isAutoMode: Bool = false
+    @Published var autoModeStep: Int = 0
     @Published var isQuestionAudioPlaying: Bool = false
     @Published var currentQuestionObject: LearningObject? = nil
-    @Published var currentIntroductionObject: LearningObject? = nil // An object has been introduced. No question has been asked yet.
+    @Published var currentIntroductionObject: LearningObject? = nil
     
-        var currentAudioPlayer: AVAudioPlayer?
-        var audioQueuePlayer: AVQueuePlayer?
-        var continuePlaying = true
+    private var modelContext: ModelContext
+
+    init(modelContext: ModelContext) {
+        self.modelContext = modelContext
+        loadAllObjects()
+        addInitialObjectsIfNeeded()
+    }
+
+    private func loadAllObjects() {
+        let descriptor = FetchDescriptor<LearningObject>(sortBy: [SortDescriptor(\.name)])
+        do {
+            allObjects = try modelContext.fetch(descriptor)
+        } catch {
+            print("Failed to fetch LearningObjects: \(error)")
+        }
+    }
+
+    private func addInitialObjectsIfNeeded() {
+        guard allObjects.isEmpty else { return }
+
+        let initialObjects = [
+            LearningObject(name: "horse", nepaliName: "घोडा", imageName: nil, videoName: "horse", thisIsAudioFileName: "this_is_a-horse", negativeAudioFileName: "negative_response_horse", whereIsAudioFileName: "where_is_horse"),
+            LearningObject(name: "cow", nepaliName: "गाई", imageName: "cow", videoName: nil, thisIsAudioFileName: "this_is_a-cow", negativeAudioFileName: "negative_response_cow", whereIsAudioFileName: "where_is_cow"),
+            LearningObject(name: "sheep", nepaliName: "भेंडा", imageName: "sheep", videoName: nil, thisIsAudioFileName: "this_is_a-sheep", negativeAudioFileName: "negative_response_sheep", whereIsAudioFileName: "where_is_sheep"),
+            LearningObject(name: "goat", nepaliName: "बाख्रा", imageName: "goat", videoName: "goat", thisIsAudioFileName: "this_is_a-goat", negativeAudioFileName: "negative_response_goat", whereIsAudioFileName: "where_is_goat"),
+            LearningObject(name: "dog", nepaliName: "कुकुर", imageName: "dog", videoName: nil, thisIsAudioFileName: "this_is_a-dog", negativeAudioFileName: "negative_response_dog", whereIsAudioFileName: "where_is_dog"),
+            LearningObject(name: "cat", nepaliName: "बिरालो", imageName: "cat", videoName: "cat", thisIsAudioFileName: "this_is_a-cat", negativeAudioFileName: "negative_response_cat", whereIsAudioFileName: "where_is_cat"),
+            LearningObject(name: "tiger", nepaliName: "बाघ", imageName: "tiger", videoName: nil, thisIsAudioFileName: "this_is_a-tiger", negativeAudioFileName: "negative_response_tiger", whereIsAudioFileName: "where_is_tiger"),
+            LearningObject(name: "rhinoceros", nepaliName: "गैडा", imageName: "rhinoceros", videoName: nil, thisIsAudioFileName: "this_is_a-rhinoceros", negativeAudioFileName: "negative_response_rhinoceros", whereIsAudioFileName: "where_is_rhinoceros"),
+            LearningObject(name: "buffalo", nepaliName: "भैंसी", imageName: "buffalo", videoName: nil, thisIsAudioFileName: "this_is_a-buffalo", negativeAudioFileName: "negative_response_buffalo", whereIsAudioFileName: "where_is_buffalo"),
+            LearningObject(name: "pig", nepaliName: "सुँगुर", imageName: "pig", videoName: nil, thisIsAudioFileName: "this_is_a-pig", negativeAudioFileName: "negative_response_pig", whereIsAudioFileName: "where_is_pig"),
+            LearningObject(name: "deer", nepaliName: "हिरण", imageName: "deer", videoName: nil, thisIsAudioFileName: "this_is_a-deer", negativeAudioFileName: "negative_response_deer", whereIsAudioFileName: "where_is_deer"),
+            LearningObject(name: "alligator", nepaliName: "गोही", imageName: "alligator", videoName: nil, thisIsAudioFileName: "this_is_a-alligator", negativeAudioFileName: "negative_response_alligator", whereIsAudioFileName: "where_is_alligator")
+        ]
+
+        for object in initialObjects {
+            modelContext.insert(object)
+        }
+
+        do {
+            try modelContext.save()
+            loadAllObjects() // Reload all objects after adding
+        } catch {
+            print("Failed to save initial objects: \(error)")
+        }
+    }
+    
+    private func loadObjects() {
+        let descriptor = FetchDescriptor<LearningObject>(sortBy: [SortDescriptor(\.name)])
+        do {
+            currentObjects = try modelContext.fetch(descriptor)
+        } catch {
+            print("Failed to fetch LearningObjects: \(error)")
+        }
+    }
+    
+    func addObject(_ object: LearningObject) {
+        modelContext.insert(object)
+        currentObjects.append(object)
+    }
+    
+    func deleteObject(_ object: LearningObject) {
+        modelContext.delete(object)
+        if let index = currentObjects.firstIndex(where: { $0.id == object.id }) {
+            currentObjects.remove(at: index)
+        }
+    }
+
+    var currentAudioPlayer: AVAudioPlayer?
+    var audioQueuePlayer: AVQueuePlayer?
+    var continuePlaying = true
 
     func introduceNextObject(completion: @escaping () -> Void) {
         print("in introduceNextObject, stopping current audio")
         stopCurrentAudio()
-        if currentObjects.count < objects.count {
-            var newObject = objects[currentObjects.count]
-            newObject.introducedHistory = Date() // Set the introduction date
+        if currentObjects.count < allObjects.count {
+            let newObject = allObjects[currentObjects.count]
+            newObject.introducedHistory = Date()
             currentObjects.append(newObject)
             self.introducingObject = currentObjects.last
             currentIntroductionObject = currentObjects.last
             currentPrompt = "यो \(newObject.nepaliName) हो।"
-            // playSoundsSequentially(sounds: [newObject.thisIsAudioFileName], type: "m4a", completion: {self.introducingObject = nil})
-            playSoundsSequentially(sounds: [newObject.thisIsAudioFileName], type: "m4a", completion:  {
+            playSoundsSequentially(sounds: [newObject.thisIsAudioFileName], type: "m4a", completion: {
                 self.introducingObject = nil
                 completion()
             })
+            
+            do {
+                try modelContext.save()
+            } catch {
+                print("Failed to save after introducing new object: \(error)")
+            }
         } else {
             completion()
         }
     }
+
     
     func askQuestion(completion: @escaping () -> Void) {
         if isQuestionAudioPlaying {
@@ -257,31 +320,27 @@ class LearningViewModel: ObservableObject {
         currentObjects.shuffle()
     }
     
-    private func recordInteraction(for object: LearningObject, type: LearningObject.Interaction.InteractionType) {
-        print("in recordInteraction function")
-        if let index = currentObjects.firstIndex(where: { $0.name == object.name }) {
-            let attempts = (type == .answeredCorrectly) ? self.attempts + 1 : self.attempts
-            currentObjects[index].history.append(LearningObject.Interaction(date: Date(), type: type, attempts: attempts))
-            print("recorded interaction for \(object.name) as \(type) with \(attempts) attempts")
-        }
+    private func recordInteraction(for object: LearningObject, type: Interaction.InteractionType) {
+        let attempts = (type == .answeredCorrectly) ? self.attempts + 1 : self.attempts
+        let interaction = Interaction(date: Date(), type: type, attempts: attempts)
+        object.history.append(interaction)
+        try? modelContext.save()
     }
     
     private func recordAskedInteraction(for object: LearningObject) {
-//        print("in recordAskedInteraction function")
-        if let index = currentObjects.firstIndex(where: { $0.name == object.name }) {
-            currentObjects[index].askedHistory.append(Date())
-            print("recorded asked interaction for \(object.name)")
-        }
+        object.askedHistory.append(Date())
+        try? modelContext.save()
     }
 
     private func updateQuestionHistory(for selectedObject: LearningObject) {
-        for index in currentObjects.indices {
-            if currentObjects[index].name == selectedObject.name {
-                currentObjects[index].questionHistory = 0
-            } else if currentObjects[index].questionHistory != nil {
-                currentObjects[index].questionHistory! += 1
+        for object in currentObjects {
+            if object.id == selectedObject.id {
+                object.questionHistory = 0
+            } else if let history = object.questionHistory {
+                object.questionHistory = history + 1
             }
         }
+        try? modelContext.save()
     }
 
     private func selectNextObjectToAsk() -> LearningObject {
