@@ -1,7 +1,7 @@
 import SwiftUI
 import SwiftData
 
-struct ContentView: View {
+struct LearnSetView: View {
     @Environment(\.modelContext) private var modelContext
     @StateObject private var viewModel: LearningViewModel
     @State private var highlightedObject: LearningObject?
@@ -42,7 +42,7 @@ struct ContentView: View {
 
                             // LazyVGrid to display objects in a grid
                             LazyVGrid(columns: gridItems, spacing: verticalSpacing) {
-                                ForEach(viewModel.currentObjects, id: \.name) { object in
+                                ForEach(viewModel.currentObjects, id: \.id) { object in
                                     objectView(for: object, screenCenter: screenCenter)
                                         .frame(width: itemSize, height: itemSize) // Set the frame size for each object
                                 }
@@ -177,7 +177,7 @@ struct ContentView: View {
                         .frame(width: itemSize, height: itemSize)
                         .clipped()
                 } else if let imageName = object.imageName {
-                    Image(imageName)
+                    Image(uiImage: loadImage(named: imageName))
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(width: itemSize, height: itemSize)
@@ -225,7 +225,23 @@ struct ContentView: View {
         correctAnswerObjectWasSelected = nil
         introducingObject = nil
     }
+
+    func loadImage(named: String) -> UIImage {
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let fileURL = documentsDirectory.appendingPathComponent(named)
+        print("Loading image from path: \(fileURL.path)")
+        if let data = try? Data(contentsOf: fileURL),
+           let image = UIImage(data: data) {
+            print("Loaded image successfully: \(named)")
+            return image
+        }
+        print("Failed to load image: \(named)")
+        return UIImage(systemName: "photo")!
+    }
+
 }
+
+
 
 struct StatusBar: View {
     @ObservedObject var viewModel: LearningViewModel

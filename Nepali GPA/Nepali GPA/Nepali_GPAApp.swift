@@ -5,7 +5,7 @@ import SwiftData
 struct YourAppName: App {
     var body: some Scene {
         WindowGroup {
-            ContentView(modelContext: sharedModelContainer.mainContext)
+            ContentView()
         }
         .modelContainer(sharedModelContainer)
     }
@@ -14,6 +14,7 @@ struct YourAppName: App {
 let sharedModelContainer: ModelContainer = {
     let schema = Schema([
         LearningObject.self,
+        GenericAudioFile.self,
     ])
     let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

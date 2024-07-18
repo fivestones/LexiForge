@@ -3,6 +3,7 @@ import Foundation
 
 @Model
 final class LearningObject {
+    var id: UUID
     var name: String
     var nepaliName: String
     var imageName: String?
@@ -14,11 +15,12 @@ final class LearningObject {
     @Attribute(.externalStorage) var askedHistory: [Date] = []
     var introducedHistory: Date?
     var questionHistory: Int?
-    
-    init(name: String, nepaliName: String, imageName: String? = nil, videoName: String? = nil,
+
+    init(id: UUID = UUID(), name: String, nepaliName: String, imageName: String? = nil, videoName: String? = nil,
          thisIsAudioFileName: String, negativeAudioFileName: String, whereIsAudioFileName: String,
          history: [Interaction] = [], askedHistory: [Date] = [], introducedHistory: Date? = nil,
          questionHistory: Int? = nil) {
+        self.id = id
         self.name = name
         self.nepaliName = nepaliName
         self.imageName = imageName

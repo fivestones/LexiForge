@@ -20,6 +20,7 @@ class LearningViewModel: ObservableObject {
     @Published var isQuestionAudioPlaying: Bool = false
     @Published var currentQuestionObject: LearningObject? = nil
     @Published var currentIntroductionObject: LearningObject? = nil
+    @Published var genericAudioFiles: [GenericAudioFile] = []
     
     private var modelContext: ModelContext
 
@@ -27,8 +28,78 @@ class LearningViewModel: ObservableObject {
         self.modelContext = modelContext
         loadAllObjects()
         addInitialObjectsIfNeeded()
+        loadGenericAudioFiles()
+        copyGenericAudioFilesIfNeeded()
+        printDocumentsDirectoryPath()
+        listDocumentsDirectoryContents()
     }
 
+
+    private func loadGenericAudioFiles() {
+        let descriptor = FetchDescriptor<GenericAudioFile>(sortBy: [SortDescriptor(\.fileName)])
+        do {
+            genericAudioFiles = try modelContext.fetch(descriptor)
+        } catch {
+            print("Failed to fetch GenericAudioFiles: \(error)")
+        }
+    }
+
+    // A function called printDocumentsDirectory to print the documents directory path
+    func printDocumentsDirectory() {
+        print("Documents directory: \(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!)")
+    }
+    
+    private func printDocumentsDirectoryPath() {
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        print("Documents Directory: \(documentsDirectory.path)")
+    }
+
+    private func listDocumentsDirectoryContents() {
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        do {
+            let fileURLs = try FileManager.default.contentsOfDirectory(at: documentsDirectory, includingPropertiesForKeys: nil)
+            for fileURL in fileURLs {
+                print("File: \(fileURL.lastPathComponent)")
+            }
+        } catch {
+            print("Error while listing files in documents directory: \(error)")
+        }
+    }
+
+    private func copyGenericAudioFilesIfNeeded() {
+        let genericAudioFiles = ["sha_bas.m4a"] // Add more files here as needed
+
+        for audioFile in genericAudioFiles {
+            if !isFileInDocumentsDirectory(fileName: audioFile) {
+                if resourceExists(resourceName: audioFile) {
+                    let newFileName = copyResourceToDocumentsDirectory(resourceName: audioFile, for: UUID())
+                    saveGenericAudioFile(name: newFileName)
+                    print("Copied audio file \(audioFile) to documents directory")
+                } else {
+                    print("Generic audio resource not found: \(audioFile)")
+                }
+            }
+        }
+    }
+
+    private func saveGenericAudioFile(name: String) {
+        let genericAudioFile = GenericAudioFile(fileName: name)
+        modelContext.insert(genericAudioFile)
+        genericAudioFiles.append(genericAudioFile)
+        try? modelContext.save()
+    }
+
+    private func isFileInDocumentsDirectory(fileName: String) -> Bool {
+        let fileURL = getDocumentDirectoryURL(for: fileName)
+        return FileManager.default.fileExists(atPath: fileURL.path)
+    }
+
+    private func getGenericAudioFile(named: String) -> String? {
+        return genericAudioFiles.first { $0.fileName.contains(named) }?.fileName
+    }
+
+
+    
     private func loadAllObjects() {
         let descriptor = FetchDescriptor<LearningObject>(sortBy: [SortDescriptor(\.name)])
         do {
@@ -42,21 +113,43 @@ class LearningViewModel: ObservableObject {
         guard allObjects.isEmpty else { return }
 
         let initialObjects = [
-            LearningObject(name: "horse", nepaliName: "घोडा", imageName: nil, videoName: "horse", thisIsAudioFileName: "this_is_a-horse", negativeAudioFileName: "negative_response_horse", whereIsAudioFileName: "where_is_horse"),
-            LearningObject(name: "cow", nepaliName: "गाई", imageName: "cow", videoName: nil, thisIsAudioFileName: "this_is_a-cow", negativeAudioFileName: "negative_response_cow", whereIsAudioFileName: "where_is_cow"),
-            LearningObject(name: "sheep", nepaliName: "भेंडा", imageName: "sheep", videoName: nil, thisIsAudioFileName: "this_is_a-sheep", negativeAudioFileName: "negative_response_sheep", whereIsAudioFileName: "where_is_sheep"),
-            LearningObject(name: "goat", nepaliName: "बाख्रा", imageName: "goat", videoName: "goat", thisIsAudioFileName: "this_is_a-goat", negativeAudioFileName: "negative_response_goat", whereIsAudioFileName: "where_is_goat"),
-            LearningObject(name: "dog", nepaliName: "कुकुर", imageName: "dog", videoName: nil, thisIsAudioFileName: "this_is_a-dog", negativeAudioFileName: "negative_response_dog", whereIsAudioFileName: "where_is_dog"),
-            LearningObject(name: "cat", nepaliName: "बिरालो", imageName: "cat", videoName: "cat", thisIsAudioFileName: "this_is_a-cat", negativeAudioFileName: "negative_response_cat", whereIsAudioFileName: "where_is_cat"),
-            LearningObject(name: "tiger", nepaliName: "बाघ", imageName: "tiger", videoName: nil, thisIsAudioFileName: "this_is_a-tiger", negativeAudioFileName: "negative_response_tiger", whereIsAudioFileName: "where_is_tiger"),
-            LearningObject(name: "rhinoceros", nepaliName: "गैडा", imageName: "rhinoceros", videoName: nil, thisIsAudioFileName: "this_is_a-rhinoceros", negativeAudioFileName: "negative_response_rhinoceros", whereIsAudioFileName: "where_is_rhinoceros"),
-            LearningObject(name: "buffalo", nepaliName: "भैंसी", imageName: "buffalo", videoName: nil, thisIsAudioFileName: "this_is_a-buffalo", negativeAudioFileName: "negative_response_buffalo", whereIsAudioFileName: "where_is_buffalo"),
-            LearningObject(name: "pig", nepaliName: "सुँगुर", imageName: "pig", videoName: nil, thisIsAudioFileName: "this_is_a-pig", negativeAudioFileName: "negative_response_pig", whereIsAudioFileName: "where_is_pig"),
-            LearningObject(name: "deer", nepaliName: "हिरण", imageName: "deer", videoName: nil, thisIsAudioFileName: "this_is_a-deer", negativeAudioFileName: "negative_response_deer", whereIsAudioFileName: "where_is_deer"),
-            LearningObject(name: "alligator", nepaliName: "गोही", imageName: "alligator", videoName: nil, thisIsAudioFileName: "this_is_a-alligator", negativeAudioFileName: "negative_response_alligator", whereIsAudioFileName: "where_is_alligator")
+            LearningObject(id: UUID(), name: "horse", nepaliName: "घोडा", imageName: nil, videoName: "horse.mp4", thisIsAudioFileName: "this_is_a-horse.m4a", negativeAudioFileName: "negative_response_horse.m4a", whereIsAudioFileName: "where_is_horse.m4a"),
+            LearningObject(id: UUID(), name: "cow", nepaliName: "गाई", imageName: "cow.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-cow.m4a", negativeAudioFileName: "negative_response_cow.m4a", whereIsAudioFileName: "where_is_cow.m4a"),
+            LearningObject(id: UUID(), name: "sheep", nepaliName: "भेंडा", imageName: "sheep.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-sheep.m4a", negativeAudioFileName: "negative_response_sheep.m4a", whereIsAudioFileName: "where_is_sheep.m4a"),
+            LearningObject(id: UUID(), name: "goat", nepaliName: "बाख्रा", imageName: "goat.jpg", videoName: "goat.mp4", thisIsAudioFileName: "this_is_a-goat.m4a", negativeAudioFileName: "negative_response_goat.m4a", whereIsAudioFileName: "where_is_goat.m4a"),
+            LearningObject(id: UUID(), name: "dog", nepaliName: "कुकुर", imageName: "dog.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-dog.m4a", negativeAudioFileName: "negative_response_dog.m4a", whereIsAudioFileName: "where_is_dog.m4a"),
+            LearningObject(id: UUID(), name: "cat", nepaliName: "बिरालो", imageName: "cat.jpg", videoName: "cat.mp4", thisIsAudioFileName: "this_is_a-cat.m4a", negativeAudioFileName: "negative_response_cat.m4a", whereIsAudioFileName: "where_is_cat.m4a"),
+            LearningObject(id: UUID(), name: "tiger", nepaliName: "बाघ", imageName: "tiger.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-tiger.m4a", negativeAudioFileName: "negative_response_tiger.m4a", whereIsAudioFileName: "where_is_tiger.m4a"),
+            LearningObject(id: UUID(), name: "rhinoceros", nepaliName: "गैडा", imageName: "rhinoceros.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-rhinoceros.m4a", negativeAudioFileName: "negative_response_rhinoceros.m4a", whereIsAudioFileName: "where_is_rhinoceros.m4a"),
+            LearningObject(id: UUID(), name: "buffalo", nepaliName: "भैंसी", imageName: "buffalo.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-buffalo.m4a", negativeAudioFileName: "negative_response_buffalo.m4a", whereIsAudioFileName: "where_is_buffalo.m4a"),
+            LearningObject(id: UUID(), name: "pig", nepaliName: "सुँगुर", imageName: "pig.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-pig.m4a", negativeAudioFileName: "negative_response_pig.m4a", whereIsAudioFileName: "where_is_pig.m4a"),
+            LearningObject(id: UUID(), name: "deer", nepaliName: "हिरण", imageName: "deer.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-deer.m4a", negativeAudioFileName: "negative_response_deer.m4a", whereIsAudioFileName: "where_is_deer.m4a"),
+            LearningObject(id: UUID(), name: "alligator", nepaliName: "गोही", imageName: "alligator.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-alligator.m4a", negativeAudioFileName: "negative_response_alligator.m4a", whereIsAudioFileName: "where_is_alligator.m4a")
         ]
 
-        for object in initialObjects {
+        for var object in initialObjects {
+            if let imageName = object.imageName {
+                if resourceExists(resourceName: imageName) {
+                    let newImageName = copyResourceToDocumentsDirectory(resourceName: imageName, for: object.id)
+                    object.imageName = newImageName
+                    print("Updated image name: \(newImageName)")
+                } else {
+                    print("Image resource not found: \(imageName)")
+                }
+            }
+            if let videoName = object.videoName {
+                if resourceExists(resourceName: videoName) {
+                    let newVideoName = copyResourceToDocumentsDirectory(resourceName: videoName, for: object.id)
+                    object.videoName = newVideoName
+                    print("Updated video name: \(newVideoName)")
+                } else {
+                    print("Video resource not found: \(videoName)")
+                }
+            }
+            object.thisIsAudioFileName = copyResourceToDocumentsDirectory(resourceName: object.thisIsAudioFileName, for: object.id)
+            object.negativeAudioFileName = copyResourceToDocumentsDirectory(resourceName: object.negativeAudioFileName, for: object.id)
+            object.whereIsAudioFileName = copyResourceToDocumentsDirectory(resourceName: object.whereIsAudioFileName, for: object.id)
+            
             modelContext.insert(object)
         }
 
@@ -66,6 +159,53 @@ class LearningViewModel: ObservableObject {
         } catch {
             print("Failed to save initial objects: \(error)")
         }
+    }
+    
+    private func resourceExists(resourceName: String) -> Bool {
+        if let resourceURL = Bundle.main.url(forResource: resourceName, withExtension: nil) {
+            print("Resource found: \(resourceURL.path)")
+            return true
+        } else {
+            print("Resource not found: \(resourceName)")
+            return false
+        }
+    }
+
+    
+    private func copyResourceToDocumentsDirectory(resourceName: String, for id: UUID) -> String {
+        // Print all resources in the main bundle
+        if let resourcePath = Bundle.main.resourcePath {
+            let resourceURL = URL(fileURLWithPath: resourcePath)
+            do {
+                let resources = try FileManager.default.contentsOfDirectory(at: resourceURL, includingPropertiesForKeys: nil)
+//                print("Available resources in bundle:")
+//                for resource in resources {
+//                    print(resource.lastPathComponent)
+//                }
+            } catch {
+                print("Error while listing resources in bundle: \(error)")
+            }
+        }
+        
+        guard let resourceURL = Bundle.main.url(forResource: resourceName, withExtension: nil) else {
+            fatalError("Resource not found: \(resourceName)")
+        }
+
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let destinationURL = documentsDirectory.appendingPathComponent("\(id.uuidString)_\(resourceName)")
+
+        do {
+            if FileManager.default.fileExists(atPath: destinationURL.path) {
+                try FileManager.default.removeItem(at: destinationURL)
+                print("Removed existing file at destination: \(destinationURL.path)")
+            }
+            try FileManager.default.copyItem(at: resourceURL, to: destinationURL)
+            print("Copied \(resourceName) to documents directory with name: \(destinationURL.lastPathComponent)")
+        } catch {
+            fatalError("Failed to copy resource to documents directory: \(error)")
+        }
+
+        return destinationURL.lastPathComponent
     }
     
     private func loadObjects() {
@@ -264,7 +404,6 @@ class LearningViewModel: ObservableObject {
         }
         print("Target name: \(targetName)")
         if let correctObject = currentObjects.first(where: { $0.nepaliName == targetName }) {
-//            print("Correct object: \(correctObject.nepaliName)")
             if selectedObject.name == correctObject.name {
                 print("Correct answer selected")
                 currentPrompt = "शाबास"
@@ -274,19 +413,24 @@ class LearningViewModel: ObservableObject {
                 recordInteraction(for: correctObject, type: .answeredCorrectly)
                 attempts = 0 // Reset attempts after a correct answer
                 correctAnswerObjectWasSelected = correctObject // Set the correct answer object
-                playSoundsSequentially(
-                    sounds: ["sha_bas"],
-                    type: "m4a",
-                    objects: [],
-                    firstItemCompletion: { [weak self] in
-                        // Restore all grayed out objects
-                        self?.grayedOutObjects.removeAll()
-                        self?.correctAnswerObjectWasSelected = nil // Reset the correct answer object after playback
-                        if self?.isAutoMode == true {
-                            self?.continueAutoMode()
+                
+                if let genericAudioFileName = getGenericAudioFile(named: "sha_bas") {
+                    playSoundsSequentially(
+                        sounds: [genericAudioFileName],
+                        type: "m4a",
+                        objects: [],
+                        firstItemCompletion: { [weak self] in
+                            // Restore all grayed out objects
+                            self?.grayedOutObjects.removeAll()
+                            self?.correctAnswerObjectWasSelected = nil // Reset the correct answer object after playback
+                            if self?.isAutoMode == true {
+                                self?.continueAutoMode()
+                            }
                         }
-                    }
-                )
+                    )
+                } else {
+                    print("Generic audio file not found: sha_bas")
+                }
             } else {
                 print("Incorrect answer selected")
                 attempts += 1 // Increment the attempt counter
@@ -451,11 +595,15 @@ class LearningViewModel: ObservableObject {
         var audioItems: [AVPlayerItem] = []
 
         for sound in sounds {
-            if let path = Bundle.main.path(forResource: sound, ofType: type) {
-                let item = AVPlayerItem(url: URL(fileURLWithPath: path))
+            let fileName = sound.hasSuffix(".\(type)") ? sound : "\(sound).\(type)"
+            let fileURL = getDocumentDirectoryURL(for: fileName)
+
+            if FileManager.default.fileExists(atPath: fileURL.path) {
+                let item = AVPlayerItem(url: fileURL)
                 audioItems.append(item)
+                print("Audio file found: \(fileName)")
             } else {
-                print("Audio file not found: \(sound).\(type)")
+                print("Audio file not found: \(fileName)")
             }
         }
 
@@ -491,6 +639,12 @@ class LearningViewModel: ObservableObject {
 
         audioQueuePlayer?.play()
     }
+
+    private func getDocumentDirectoryURL(for fileName: String) -> URL {
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        return documentsDirectory.appendingPathComponent(fileName)
+    }
+
     
     private func stopCurrentAudio() {
         print("stoping current audio and setting isQuestionAudioPlaying to false")
