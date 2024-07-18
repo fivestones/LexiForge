@@ -34,7 +34,6 @@ class LearningViewModel: ObservableObject {
         listDocumentsDirectoryContents()
     }
 
-
     private func loadGenericAudioFiles() {
         let descriptor = FetchDescriptor<GenericAudioFile>(sortBy: [SortDescriptor(\.fileName)])
         do {
@@ -42,6 +41,10 @@ class LearningViewModel: ObservableObject {
         } catch {
             print("Failed to fetch GenericAudioFiles: \(error)")
         }
+    }
+
+    private func getPositiveFeedbackAudioFileName() -> String? {
+        return genericAudioFiles.randomElement()?.fileName
     }
 
     // A function called printDocumentsDirectory to print the documents directory path
@@ -404,6 +407,7 @@ class LearningViewModel: ObservableObject {
         }
         print("Target name: \(targetName)")
         if let correctObject = currentObjects.first(where: { $0.nepaliName == targetName }) {
+    //            print("Correct object: \(correctObject.nepaliName)")
             if selectedObject.name == correctObject.name {
                 print("Correct answer selected")
                 currentPrompt = "शाबास"
@@ -413,10 +417,9 @@ class LearningViewModel: ObservableObject {
                 recordInteraction(for: correctObject, type: .answeredCorrectly)
                 attempts = 0 // Reset attempts after a correct answer
                 correctAnswerObjectWasSelected = correctObject // Set the correct answer object
-                
-                if let genericAudioFileName = getGenericAudioFile(named: "sha_bas") {
+                if let feedbackFileName = getPositiveFeedbackAudioFileName() {
                     playSoundsSequentially(
-                        sounds: [genericAudioFileName],
+                        sounds: [feedbackFileName],
                         type: "m4a",
                         objects: [],
                         firstItemCompletion: { [weak self] in
@@ -428,8 +431,6 @@ class LearningViewModel: ObservableObject {
                             }
                         }
                     )
-                } else {
-                    print("Generic audio file not found: sha_bas")
                 }
             } else {
                 print("Incorrect answer selected")

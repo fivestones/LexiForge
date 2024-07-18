@@ -229,10 +229,10 @@ struct LearnSetView: View {
     func loadImage(named: String) -> UIImage {
         let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let fileURL = documentsDirectory.appendingPathComponent(named)
-        print("Loading image from path: \(fileURL.path)")
+//        print("Loading image from path: \(fileURL.path)")
         if let data = try? Data(contentsOf: fileURL),
            let image = UIImage(data: data) {
-            print("Loaded image successfully: \(named)")
+//            print("Loaded image successfully: \(named)")
             return image
         }
         print("Failed to load image: \(named)")
@@ -240,8 +240,6 @@ struct LearnSetView: View {
     }
 
 }
-
-
 
 struct StatusBar: View {
     @ObservedObject var viewModel: LearningViewModel

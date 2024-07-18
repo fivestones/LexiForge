@@ -17,9 +17,16 @@ struct VideoPlayerView: UIViewRepresentable {
         init(frame: CGRect, videoName: String) {
             super.init(frame: frame)
 
-            guard let videoURL = Bundle.main.url(forResource: videoName, withExtension: "mp4") else {
+            // Get the path to the video file in the documents directory
+            let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            let videoURL = documentsDirectory.appendingPathComponent(videoName)
+
+            // Ensure the video file exists at the path
+            guard FileManager.default.fileExists(atPath: videoURL.path) else {
+                print("Video file not found: \(videoURL.path)")
                 return
             }
+
             let playerItem = AVPlayerItem(url: videoURL)
             let queuePlayer = AVQueuePlayer(playerItem: playerItem)
 
