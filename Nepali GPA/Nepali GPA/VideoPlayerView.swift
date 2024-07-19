@@ -29,6 +29,7 @@ struct VideoPlayerView: UIViewRepresentable {
 
             let playerItem = AVPlayerItem(url: videoURL)
             let queuePlayer = AVQueuePlayer(playerItem: playerItem)
+            queuePlayer.isMuted = true  // Mute the video player
 
             playerLayer.player = queuePlayer
             playerLayer.videoGravity = .resizeAspectFill
