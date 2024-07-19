@@ -285,6 +285,7 @@ struct ControlBar: View {
     var body: some View {
         HStack(spacing: 0) {
             Button(action: {
+                print("tapped on plus.diamond, going to introduce next object")
                 resetAnimationStates()
                 viewModel.introduceNextObject(completion: {})
             }) {

@@ -316,6 +316,7 @@ class LearningViewModel: ObservableObject {
         }
         switch autoModeStep {
         case 0:
+            print("we are in autoModeStep 0, about to go to introduceNextObject")
             introduceNextObject {
                 self.autoModeStep += 1
 //                print("audoModeStep: \(self.autoModeStep)")
@@ -328,12 +329,14 @@ class LearningViewModel: ObservableObject {
             }
         case 1:
             // We got here because there was already one object but not two
+            print("we are in autoModeStep 1, about to go to introduceNextObject")
             self.introduceNextObject {
                 self.autoModeStep += 1
                 self.continueAutoMode()
             }
         case let x where x > 1:
             if checkCompetency() {
+                print("we are in autoModeStep > 1, and checkCompetency was true, about to go to introduceNextObject")
                 introduceNextObject {
                     self.autoModeStep += 1
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
@@ -596,8 +599,10 @@ class LearningViewModel: ObservableObject {
         var audioItems: [AVPlayerItem] = []
 
         for sound in sounds {
+            print("Attempting to play sound: \(sound)")
             let fileName = sound.hasSuffix(".\(type)") ? sound : "\(sound).\(type)"
             let fileURL = getDocumentDirectoryURL(for: fileName)
+            print("Resolved file URL: \(fileURL)")
 
             if FileManager.default.fileExists(atPath: fileURL.path) {
                 let item = AVPlayerItem(url: fileURL)
@@ -606,6 +611,16 @@ class LearningViewModel: ObservableObject {
             } else {
                 print("Audio file not found: \(fileName)")
             }
+        }
+
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .default)
+            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+            print("Audio session is active and ready in playSoundsSequentially")
+        } catch {
+            print("Failed to set up AVAudioSession in playSoundsSequentially: \(error)")
+            return
         }
 
         audioQueuePlayer = AVQueuePlayer(items: audioItems)
@@ -638,6 +653,7 @@ class LearningViewModel: ObservableObject {
             }
         }
 
+        print("Starting audio playback")
         audioQueuePlayer?.play()
     }
 
@@ -648,13 +664,21 @@ class LearningViewModel: ObservableObject {
 
     
     private func stopCurrentAudio() {
-        print("stoping current audio and setting isQuestionAudioPlaying to false")
+        print("Stopping current audio and setting isQuestionAudioPlaying to false")
         isQuestionAudioPlaying = false
         continuePlaying = false
         audioQueuePlayer?.pause()
         audioQueuePlayer = nil
         currentAudioPlayer?.stop()
         currentAudioPlayer = nil
+
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
+            print("Audio session deactivated in stopCurrentAudio")
+        } catch {
+            print("Failed to deactivate AVAudioSession in stopCurrentAudio: \(error)")
+        }
     }
     
     private func grayOutHalfObjects(except targetObject: LearningObject) {

@@ -106,6 +106,7 @@ struct AddObjectView: View {
         do {
             try audioSession.setCategory(.playAndRecord, mode: .default)
             try audioSession.setActive(true)
+            print("Audio session set for recording")
 
             let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             let audioFilename = documentsPath.appendingPathComponent("\(type).m4a")
@@ -122,8 +123,9 @@ struct AddObjectView: View {
 
             isRecording = true
             currentRecordingType = type
+            print("Started recording for type: \(type) at \(audioFilename.path)")
         } catch {
-            print("Could not start recording")
+            print("Could not start recording: \(error)")
         }
     }
 
@@ -140,9 +142,18 @@ struct AddObjectView: View {
             case .whereIs:
                 whereIsAudioURL = audioRecorder?.url
             }
+            print("Stopped recording for type: \(type) at \(audioRecorder?.url.path ?? "unknown location")")
         }
 
         currentRecordingType = nil
+
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
+            print("Audio session deactivated after recording in stopRecording")
+        } catch {
+            print("Failed to deactivate AVAudioSession in stopRecording: \(error)")
+        }
     }
 
     func playRecording(url: URL) {
