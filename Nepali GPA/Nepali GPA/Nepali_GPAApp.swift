@@ -15,6 +15,7 @@ let sharedModelContainer: ModelContainer = {
     let schema = Schema([
         LearningObject.self,
         GenericAudioFile.self,
+        Tag.self
     ])
     let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

@@ -13,6 +13,12 @@ struct ContentView: View {
                 NavigationLink(destination: AddObjectView()) {
                     Text("Add New Object")
                 }
+                NavigationLink(destination: TagListView()) {
+                    Text("Tags")
+                }
+                NavigationLink(destination: ObjectListView()) {
+                    Text("Objects")
+                }
             }
             .navigationTitle("Language Learning App")
         }

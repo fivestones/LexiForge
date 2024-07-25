@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		63133E062C51EFA80011006A /* ObjectListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63133E052C51EFA80011006A /* ObjectListView.swift */; };
+		63133E082C51F0E80011006A /* EditObjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63133E072C51F0E80011006A /* EditObjectView.swift */; };
 		631D5CCE2C4175F700D793E2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 631D5CCD2C4175F700D793E2 /* ContentView.swift */; };
 		631D5CD02C41762600D793E2 /* AddObjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 631D5CCF2C41762600D793E2 /* AddObjectView.swift */; };
 		632756442C4822EE00B92DBC /* cat.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 632756382C4822EE00B92DBC /* cat.jpg */; };
@@ -80,6 +82,7 @@
 		6372387C2C2C349F0004C0C1 /* negative_response_dog.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 637238582C2C349F0004C0C1 /* negative_response_dog.m4a */; };
 		6372387D2C2C349F0004C0C1 /* this_is_a-goat.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 637238592C2C349F0004C0C1 /* this_is_a-goat.m4a */; };
 		6372387E2C2C349F0004C0C1 /* negative_response_sheep.m4a in Resources */ = {isa = PBXBuildFile; fileRef = 6372385A2C2C349F0004C0C1 /* negative_response_sheep.m4a */; };
+		639C3D402C4AA17400049469 /* TagListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 639C3D3F2C4AA17400049469 /* TagListView.swift */; };
 		639ED9682C25E3E300FA666C /* Nepali_GPAApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 639ED9672C25E3E300FA666C /* Nepali_GPAApp.swift */; };
 		639ED96A2C25E3E300FA666C /* LearnSetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 639ED9692C25E3E300FA666C /* LearnSetView.swift */; };
 		639ED96C2C25E3E500FA666C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 639ED96B2C25E3E500FA666C /* Assets.xcassets */; };
@@ -89,6 +92,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		63133E052C51EFA80011006A /* ObjectListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ObjectListView.swift; sourceTree = "<group>"; };
+		63133E072C51F0E80011006A /* EditObjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditObjectView.swift; sourceTree = "<group>"; };
 		631D5CCD2C4175F700D793E2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		631D5CCF2C41762600D793E2 /* AddObjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddObjectView.swift; sourceTree = "<group>"; };
 		632756382C4822EE00B92DBC /* cat.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = cat.jpg; path = "Nepali GPA/Assets.xcassets/cat.imageset/cat.jpg"; sourceTree = SOURCE_ROOT; };
@@ -162,6 +167,7 @@
 		637238582C2C349F0004C0C1 /* negative_response_dog.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = negative_response_dog.m4a; sourceTree = "<group>"; };
 		637238592C2C349F0004C0C1 /* this_is_a-goat.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = "this_is_a-goat.m4a"; sourceTree = "<group>"; };
 		6372385A2C2C349F0004C0C1 /* negative_response_sheep.m4a */ = {isa = PBXFileReference; lastKnownFileType = file; path = negative_response_sheep.m4a; sourceTree = "<group>"; };
+		639C3D3F2C4AA17400049469 /* TagListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TagListView.swift; sourceTree = "<group>"; };
 		639ED9642C25E3E300FA666C /* Nepali GPA.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Nepali GPA.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		639ED9672C25E3E300FA666C /* Nepali_GPAApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Nepali_GPAApp.swift; sourceTree = "<group>"; };
 		639ED9692C25E3E300FA666C /* LearnSetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LearnSetView.swift; sourceTree = "<group>"; };
@@ -288,6 +294,9 @@
 				637237F22C26DB6B0004C0C1 /* Media */,
 				631D5CCF2C41762600D793E2 /* AddObjectView.swift */,
 				632756502C482D3300B92DBC /* GenericAudioFileModel.swift */,
+				639C3D3F2C4AA17400049469 /* TagListView.swift */,
+				63133E052C51EFA80011006A /* ObjectListView.swift */,
+				63133E072C51F0E80011006A /* EditObjectView.swift */,
 			);
 			path = "Nepali GPA";
 			sourceTree = "<group>";
@@ -444,8 +453,11 @@
 				639ED9762C26CE0A00FA666C /* LearningViewModel.swift in Sources */,
 				631D5CCE2C4175F700D793E2 /* ContentView.swift in Sources */,
 				639ED96A2C25E3E300FA666C /* LearnSetView.swift in Sources */,
+				63133E062C51EFA80011006A /* ObjectListView.swift in Sources */,
 				631D5CD02C41762600D793E2 /* AddObjectView.swift in Sources */,
 				639ED9682C25E3E300FA666C /* Nepali_GPAApp.swift in Sources */,
+				639C3D402C4AA17400049469 /* TagListView.swift in Sources */,
+				63133E082C51F0E80011006A /* EditObjectView.swift in Sources */,
 				639ED97A2C26CE4D00FA666C /* VideoPlayerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -2,6 +2,18 @@ import SwiftData
 import Foundation
 
 @Model
+final class Tag: Identifiable {
+    var id: UUID
+    var name: String
+
+    init(id: UUID = UUID(), name: String) {
+        self.id = id
+        self.name = name
+    }
+}
+
+
+@Model
 final class LearningObject {
     var id: UUID
     var name: String
@@ -15,11 +27,13 @@ final class LearningObject {
     @Attribute(.externalStorage) var askedHistory: [Date] = []
     var introducedHistory: Date?
     var questionHistory: Int?
+    @Attribute(.externalStorage) var setTags: [UUID] = []
+    var partOfSpeechTag: UUID?
 
     init(id: UUID = UUID(), name: String, nepaliName: String, imageName: String? = nil, videoName: String? = nil,
          thisIsAudioFileName: String, negativeAudioFileName: String, whereIsAudioFileName: String,
          history: [Interaction] = [], askedHistory: [Date] = [], introducedHistory: Date? = nil,
-         questionHistory: Int? = nil) {
+         questionHistory: Int? = nil, setTags: [UUID] = [], partOfSpeechTag: UUID? = nil) {
         self.id = id
         self.name = name
         self.nepaliName = nepaliName
@@ -32,6 +46,8 @@ final class LearningObject {
         self.askedHistory = askedHistory
         self.introducedHistory = introducedHistory
         self.questionHistory = questionHistory
+        self.setTags = setTags
+        self.partOfSpeechTag = partOfSpeechTag
     }
     
     @Transient

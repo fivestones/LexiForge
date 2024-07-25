@@ -6,6 +6,7 @@ import PhotosUI
 struct AddObjectView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Query private var tags: [Tag]
     @State private var name = ""
     @State private var nepaliName = ""
     @State private var selectedItem: PhotosPickerItem?
@@ -17,6 +18,8 @@ struct AddObjectView: View {
     @State private var whereIsAudioURL: URL?
     @State private var audioRecorder: AVAudioRecorder?
     @State private var currentRecordingType: RecordingType?
+    @State private var selectedTags: Set<UUID> = []
+    @State private var newTagName: String = ""
 
     enum RecordingType {
         case thisIs, negative, whereIs
@@ -71,11 +74,53 @@ struct AddObjectView: View {
                 recordButton(for: .whereIs, label: "Where is...")
             }
 
+            Section(header: Text("Tags")) {
+                List {
+                    ForEach(tags) { tag in
+                        HStack {
+                            Text(tag.name)
+                            Spacer()
+                            if selectedTags.contains(tag.id) {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            if selectedTags.contains(tag.id) {
+                                selectedTags.remove(tag.id)
+                            } else {
+                                selectedTags.insert(tag.id)
+                            }
+                        }
+                    }
+                }
+
+                HStack {
+                    TextField("New Tag", text: $newTagName)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding()
+
+                    Button(action: addTag) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title)
+                            .padding()
+                    }
+                }
+            }
+
             Button("Save Object") {
                 saveObject()
             }
         }
         .navigationTitle("Add New Object")
+    }
+
+    func addTag() {
+        guard !newTagName.isEmpty else { return }
+        let newTag = Tag(name: newTagName)
+        modelContext.insert(newTag)
+        try? modelContext.save()
+        newTagName = ""
     }
 
     func recordButton(for type: RecordingType, label: String) -> some View {
@@ -195,7 +240,8 @@ struct AddObjectView: View {
             videoName: selectedVideoData != nil ? "\(id.uuidString).mp4" : nil,
             thisIsAudioFileName: "\(id.uuidString)_thisIs.m4a",
             negativeAudioFileName: "\(id.uuidString)_negative.m4a",
-            whereIsAudioFileName: "\(id.uuidString)_whereIs.m4a"
+            whereIsAudioFileName: "\(id.uuidString)_whereIs.m4a",
+            setTags: Array(selectedTags)
         )
 
         modelContext.insert(newObject)
