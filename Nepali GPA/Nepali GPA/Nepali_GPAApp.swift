@@ -3,9 +3,20 @@ import SwiftData
 
 @main
 struct YourAppName: App {
+    @StateObject private var learningViewModel: LearningViewModel
+
+    init() {
+        let modelContext = sharedModelContainer.mainContext
+        _learningViewModel = StateObject(wrappedValue: LearningViewModel(modelContext: modelContext))
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(learningViewModel)
+                .onAppear {
+                    learningViewModel.performInitialSetup()
+                }
         }
         .modelContainer(sharedModelContainer)
     }

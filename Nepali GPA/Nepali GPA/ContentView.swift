@@ -2,25 +2,62 @@ import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
+    @EnvironmentObject private var learningViewModel: LearningViewModel
+    @State private var selectedTab = 0
 
     var body: some View {
-        NavigationView {
-            List {
-                NavigationLink(destination: LearnSetView(modelContext: modelContext)) {
-                    Text("Learn Set")
+        TabView(selection: $selectedTab) {
+            LearnOptionsView()
+                .tabItem {
+                    Label("Learn", systemImage: "book.fill")
                 }
-                NavigationLink(destination: AddObjectView()) {
-                    Text("Add New Object")
+                .tag(0)
+
+            ObjectListView()
+                .tabItem {
+                    Label("Objects", systemImage: "list.bullet")
                 }
-                NavigationLink(destination: TagListView()) {
-                    Text("Tags")
+                .tag(1)
+
+            TagListView()
+                .tabItem {
+                    Label("Tags", systemImage: "tag.fill")
                 }
-                NavigationLink(destination: ObjectListView()) {
-                    Text("Objects")
+                .tag(2)
+
+            SettingsView()
+                .tabItem {
+                    Label("Settings", systemImage: "gear")
                 }
-            }
-            .navigationTitle("Language Learning App")
+                .tag(3)
         }
+        .environmentObject(learningViewModel)
     }
 }
+
+// Placeholder view for Settings
+struct SettingsView: View {
+    var body: some View {
+        Text("Settings View")
+            .font(.largeTitle)
+    }
+}
+
+// Preview
+struct ContentView_Previews: PreviewProvider {
+    static var previews: some View {
+        ContentView()
+            .environmentObject(LearningViewModel(modelContext: previewContainer.mainContext))
+            .modelContainer(previewContainer)
+    }
+}
+
+// Convenience preview container
+let previewContainer: ModelContainer = {
+    do {
+        let container = try ModelContainer(for: LearningObject.self, GenericAudioFile.self, Tag.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        return container
+    } catch {
+        fatalError("Failed to create preview container: \(error.localizedDescription)")
+    }
+}()

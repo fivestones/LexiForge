@@ -1,9 +1,10 @@
 import SwiftUI
 import SwiftData
+import AVFoundation
 
 struct LearnSetView: View {
-    @Environment(\.modelContext) private var modelContext
-    @StateObject private var viewModel: LearningViewModel
+    @EnvironmentObject private var viewModel: LearningViewModel
+    @Environment(\.dismiss) private var dismiss
     @State private var highlightedObject: LearningObject?
     @State private var correctAnswerObjectWasSelected: LearningObject?
     @State private var introducingObject: LearningObject?
@@ -21,14 +22,10 @@ struct LearnSetView: View {
     
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.verticalSizeClass) var verticalSizeClass
-    
-    init(modelContext: ModelContext) {
-        _viewModel = StateObject(wrappedValue: LearningViewModel(modelContext: modelContext))
-    }
 
     var body: some View {
         GeometryReader { geometry in
-            VStack {
+            VStack(spacing: 0) {
                 ZStack {
                     ScrollView {
                         VStack {
@@ -60,33 +57,29 @@ struct LearnSetView: View {
                             .background(Color.gray.opacity(0.2))
                     }
                 }
-                .onAppear {
-                    // Use screen dimensions for initial layout calculation
-                    updateLayout(for: geometry.size)
-                }
-                .onChange(of: geometry.size) { newSize in
-                    // Recalculate layout when size changes (orientation change)
-                    updateLayout(for: newSize)
-                    scaleFactor = calculateScaleFactor(screenSize: newSize, itemSize: itemSize)
-                }
-                .onReceive(viewModel.$highlightedObject) { object in
-                    highlightedObject = object
-                }
-                .onReceive(viewModel.$introducingObject) { object in
-                    introducingObject = object
-                }
-                .onReceive(viewModel.$correctAnswerObjectWasSelected) { object in
-                    correctAnswerObjectWasSelected = object
-                }
+                .edgesIgnoringSafeArea(.bottom)
             }
+            .edgesIgnoringSafeArea(.all)
+            .navigationBarItems(leading: Button("Close") {
+                dismiss()
+            })
             .onAppear {
-                screenCenter = CGPoint(
-//                    x: geometry.size.width / 2,
-//                    y: geometry.size.height / 2
-                    x: UIScreen.main.bounds.width / 2,
-                    y: UIScreen.main.bounds.height / 2
-                )
-                scaleFactor = calculateScaleFactor(screenSize: geometry.size, itemSize: itemSize)
+                // Use screen dimensions for initial layout calculation
+                updateLayout(for: geometry.size)
+            }
+            .onChange(of: geometry.size) { newSize in
+                // Recalculate layout when size changes (orientation change)
+                updateLayout(for: newSize)
+                scaleFactor = calculateScaleFactor(screenSize: newSize, itemSize: itemSize)
+            }
+            .onReceive(viewModel.$highlightedObject) { object in
+                highlightedObject = object
+            }
+            .onReceive(viewModel.$introducingObject) { object in
+                introducingObject = object
+            }
+            .onReceive(viewModel.$correctAnswerObjectWasSelected) { object in
+                correctAnswerObjectWasSelected = object
             }
         }
     }
