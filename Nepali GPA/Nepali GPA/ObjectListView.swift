@@ -6,6 +6,8 @@ struct ObjectListView: View {
     @Query private var objects: [LearningObject]
     @Query private var tags: [Tag]
     @State private var selectedTags: Set<UUID> = []
+    @State private var selectedObjectID: UUID?
+    @State private var isAddingNewObject = false
 
     var filteredObjects: [LearningObject] {
         if selectedTags.isEmpty {
@@ -18,7 +20,7 @@ struct ObjectListView: View {
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack {
                 // Tag Filter Section
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -38,7 +40,9 @@ struct ObjectListView: View {
 
                 List {
                     ForEach(filteredObjects) { object in
-                        NavigationLink(destination: EditObjectView(object: .constant(object))) {
+                        Button(action: {
+                            selectedObjectID = object.id
+                        }) {
                             HStack {
                                 VStack(alignment: .leading) {
                                     Text(object.name)
@@ -52,23 +56,63 @@ struct ObjectListView: View {
                     }
                     .onDelete(perform: deleteObjects)
                 }
-
-                // Add Object Button
-                NavigationLink(destination: AddObjectView()) {
-                    Text("Add New Object")
-                        .font(.title2)
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
-                }
-                .padding()
             }
             .navigationTitle("Objects")
             .toolbar {
-                EditButton()
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    EditButton()
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        isAddingNewObject = true
+                    }) {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .sheet(item: selectedObjectBinding()) { object in
+                NavigationStack {
+                    EditObjectView(object: Binding(
+                        get: { object },
+                        set: { newValue in
+                            if let index = objects.firstIndex(where: { $0.id == object.id }) {
+                                modelContext.insert(newValue)
+                            }
+                        }
+                    ))
+                    .navigationTitle("Edit Object")
+                    .toolbar {
+                        ToolbarItem(placement: .navigationBarTrailing) {
+                            Button("Save") {
+                                try? modelContext.save()
+                                selectedObjectID = nil
+                            }
+                        }
+                    }
+                }
+            }
+            .sheet(isPresented: $isAddingNewObject) {
+                NavigationStack {
+                    AddObjectView()
+                        .navigationTitle("Add New Object")
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                                Button("Save") {
+                                    try? modelContext.save()
+                                    isAddingNewObject = false
+                                }
+                            }
+                        }
+                }
             }
         }
+    }
+
+    private func selectedObjectBinding() -> Binding<LearningObject?> {
+        Binding<LearningObject?>(
+            get: { selectedObjectID.flatMap { id in objects.first(where: { $0.id == id }) } },
+            set: { object in selectedObjectID = object?.id }
+        )
     }
 
     private func deleteObjects(at offsets: IndexSet) {
