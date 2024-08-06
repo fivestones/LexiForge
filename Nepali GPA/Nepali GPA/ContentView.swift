@@ -4,16 +4,33 @@ import SwiftData
 struct ContentView: View {
     @EnvironmentObject private var learningViewModel: LearningViewModel
     @State private var selectedTab = 0
+    @State var currentView: CurrentView = .ControlView
+    
+    var body: some View {
+        switch currentView {
+        case CurrentView.ControlView:
+            ControlView(currentView: $currentView)
+        case CurrentView.LearnSetView:
+            LearnSetView(currentView: $currentView)
+        }
+    }
+}
 
+struct ControlView: View {
+    @Binding var currentView: CurrentView
+    
+    @EnvironmentObject private var learningViewModel: LearningViewModel
+    @State private var selectedTab = 0
+    
     var body: some View {
         TabView(selection: $selectedTab) {
-            LearnOptionsView()
+            LearnOptionsView(currentView: $currentView)
                 .tabItem {
                     Label("Learn", systemImage: "book.fill")
                 }
                 .tag(0)
 
-            ObjectListView()
+            ObjectListView(sort: SortDescriptor(\LearningObject.name))
                 .tabItem {
                     Label("Objects", systemImage: "list.bullet")
                 }
@@ -31,7 +48,6 @@ struct ContentView: View {
                 }
                 .tag(3)
         }
-        .environmentObject(learningViewModel)
     }
 }
 
@@ -61,3 +77,8 @@ let previewContainer: ModelContainer = {
         fatalError("Failed to create preview container: \(error.localizedDescription)")
     }
 }()
+
+enum CurrentView {
+    case LearnSetView
+    case ControlView
+}

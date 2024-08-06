@@ -5,13 +5,15 @@ import Foundation
 final class Tag: Identifiable {
     var id: UUID
     var name: String
+    
+    var objects: [LearningObject]
 
-    init(id: UUID = UUID(), name: String) {
+    init(id: UUID = UUID(), name: String, objects: [LearningObject]) {
         self.id = id
         self.name = name
+        self.objects = objects
     }
 }
-
 
 @Model
 final class LearningObject {
@@ -29,11 +31,12 @@ final class LearningObject {
     var questionHistory: Int?
     @Attribute(.externalStorage) var setTags: [UUID] = []
     var partOfSpeechTag: UUID?
+    @Relationship(inverse: \Tag.objects) var tags: [Tag]
 
     init(id: UUID = UUID(), name: String, nepaliName: String, imageName: String? = nil, videoName: String? = nil,
          thisIsAudioFileName: String, negativeAudioFileName: String, whereIsAudioFileName: String,
          history: [Interaction] = [], askedHistory: [Date] = [], introducedHistory: Date? = nil,
-         questionHistory: Int? = nil, setTags: [UUID] = [], partOfSpeechTag: UUID? = nil) {
+         questionHistory: Int? = nil, setTags: [UUID] = [], partOfSpeechTag: UUID? = nil, tags: [Tag]) {
         self.id = id
         self.name = name
         self.nepaliName = nepaliName
@@ -48,6 +51,7 @@ final class LearningObject {
         self.questionHistory = questionHistory
         self.setTags = setTags
         self.partOfSpeechTag = partOfSpeechTag
+        self.tags = tags
     }
     
     @Transient

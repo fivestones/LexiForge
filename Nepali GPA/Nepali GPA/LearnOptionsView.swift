@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct LearnOptionsView: View {
+    @Binding var currentView: CurrentView
     @EnvironmentObject private var learningViewModel: LearningViewModel
     @Query private var tags: [Tag]
     @State private var selectedTag: Tag?
@@ -26,9 +27,11 @@ struct LearnOptionsView: View {
 
             Button("Start Learning") {
                 if let tag = selectedTag {
-                    learningViewModel.setCurrentTag(tag)
+                    // learningViewModel.setCurrentTag(tag)
                     showLearnSetView = true
                 }
+                currentView = CurrentView.LearnSetView
+//                showLearnSetView = true
             }
             .disabled(selectedTag == nil)
             .padding()
@@ -37,9 +40,9 @@ struct LearnOptionsView: View {
             .cornerRadius(10)
             .padding()
         }
-        .fullScreenCover(isPresented: $showLearnSetView) {
-            LearnSetView()
-        }
+//        .sheet(isPresented: $showLearnSetView) {
+//            LearnSetView()
+//        }
     }
 }
 

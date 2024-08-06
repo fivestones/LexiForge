@@ -34,30 +34,6 @@ class LearningViewModel: ObservableObject {
         listDocumentsDirectoryContents()
     }
 
-    func setCurrentTag(_ tag: Tag) {
-        currentTag = tag
-        loadObjectsForCurrentTag()
-    }
-    
-    private func loadObjectsForCurrentTag() {
-        guard let currentTag = currentTag else {
-            loadAllObjects()
-            return
-        }
-
-        let descriptor = FetchDescriptor<LearningObject>(
-            predicate: #Predicate<LearningObject> { object in
-                object.setTags.contains(currentTag.id)
-            },
-            sortBy: [SortDescriptor(\.name)]
-        )
-
-        do {
-            currentObjects = try modelContext.fetch(descriptor)
-        } catch {
-            print("Failed to fetch LearningObjects for tag: \(error)")
-        }
-    }
     
     private func loadGenericAudioFiles() {
         let descriptor = FetchDescriptor<GenericAudioFile>(sortBy: [SortDescriptor(\.fileName)])
@@ -162,31 +138,31 @@ class LearningViewModel: ObservableObject {
                 animalTag = existingTag
                 print("Using existing 'animals' tag")
             } else {
-                animalTag = Tag(name: "animals")
+                animalTag = Tag(name: "animals", objects: [])
                 modelContext.insert(animalTag)
                 print("Created new 'animals' tag")
             }
         } catch {
             print("Error fetching 'animals' tag: \(error)")
             // Create a new tag if we couldn't fetch existing ones
-            animalTag = Tag(name: "animals")
+            animalTag = Tag(name: "animals", objects: [])
             modelContext.insert(animalTag)
             print("Created new 'animals' tag after fetch error")
         }
         
         let initialObjects = [
-            LearningObject(id: UUID(), name: "horse", nepaliName: "घोडा", imageName: nil, videoName: "horse.mp4", thisIsAudioFileName: "this_is_a-horse.m4a", negativeAudioFileName: "negative_response_horse.m4a", whereIsAudioFileName: "where_is_horse.m4a"),
-            LearningObject(id: UUID(), name: "cow", nepaliName: "गाई", imageName: "cow.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-cow.m4a", negativeAudioFileName: "negative_response_cow.m4a", whereIsAudioFileName: "where_is_cow.m4a"),
-            LearningObject(id: UUID(), name: "sheep", nepaliName: "भेंडा", imageName: "sheep.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-sheep.m4a", negativeAudioFileName: "negative_response_sheep.m4a", whereIsAudioFileName: "where_is_sheep.m4a"),
-            LearningObject(id: UUID(), name: "goat", nepaliName: "बाख्रा", imageName: "goat.jpg", videoName: "goat.mp4", thisIsAudioFileName: "this_is_a-goat.m4a", negativeAudioFileName: "negative_response_goat.m4a", whereIsAudioFileName: "where_is_goat.m4a"),
-            LearningObject(id: UUID(), name: "dog", nepaliName: "कुकुर", imageName: "dog.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-dog.m4a", negativeAudioFileName: "negative_response_dog.m4a", whereIsAudioFileName: "where_is_dog.m4a"),
-            LearningObject(id: UUID(), name: "cat", nepaliName: "बिरालो", imageName: "cat.jpg", videoName: "cat.mp4", thisIsAudioFileName: "this_is_a-cat.m4a", negativeAudioFileName: "negative_response_cat.m4a", whereIsAudioFileName: "where_is_cat.m4a"),
-            LearningObject(id: UUID(), name: "tiger", nepaliName: "बाघ", imageName: "tiger.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-tiger.m4a", negativeAudioFileName: "negative_response_tiger.m4a", whereIsAudioFileName: "where_is_tiger.m4a"),
-            LearningObject(id: UUID(), name: "rhinoceros", nepaliName: "गैडा", imageName: "rhinoceros.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-rhinoceros.m4a", negativeAudioFileName: "negative_response_rhinoceros.m4a", whereIsAudioFileName: "where_is_rhinoceros.m4a"),
-            LearningObject(id: UUID(), name: "buffalo", nepaliName: "भैंसी", imageName: "buffalo.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-buffalo.m4a", negativeAudioFileName: "negative_response_buffalo.m4a", whereIsAudioFileName: "where_is_buffalo.m4a"),
-            LearningObject(id: UUID(), name: "pig", nepaliName: "सुँगुर", imageName: "pig.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-pig.m4a", negativeAudioFileName: "negative_response_pig.m4a", whereIsAudioFileName: "where_is_pig.m4a"),
-            LearningObject(id: UUID(), name: "deer", nepaliName: "हिरण", imageName: "deer.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-deer.m4a", negativeAudioFileName: "negative_response_deer.m4a", whereIsAudioFileName: "where_is_deer.m4a"),
-            LearningObject(id: UUID(), name: "alligator", nepaliName: "गोही", imageName: "alligator.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-alligator.m4a", negativeAudioFileName: "negative_response_alligator.m4a", whereIsAudioFileName: "where_is_alligator.m4a")
+            LearningObject(id: UUID(), name: "horse", nepaliName: "घोडा", imageName: nil, videoName: "horse.mp4", thisIsAudioFileName: "this_is_a-horse.m4a", negativeAudioFileName: "negative_response_horse.m4a", whereIsAudioFileName: "where_is_horse.m4a", tags: []),
+            LearningObject(id: UUID(), name: "cow", nepaliName: "गाई", imageName: "cow.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-cow.m4a", negativeAudioFileName: "negative_response_cow.m4a", whereIsAudioFileName: "where_is_cow.m4a", tags: []),
+            LearningObject(id: UUID(), name: "sheep", nepaliName: "भेंडा", imageName: "sheep.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-sheep.m4a", negativeAudioFileName: "negative_response_sheep.m4a", whereIsAudioFileName: "where_is_sheep.m4a", tags: []),
+            LearningObject(id: UUID(), name: "goat", nepaliName: "बाख्रा", imageName: "goat.jpg", videoName: "goat.mp4", thisIsAudioFileName: "this_is_a-goat.m4a", negativeAudioFileName: "negative_response_goat.m4a", whereIsAudioFileName: "where_is_goat.m4a", tags: []),
+            LearningObject(id: UUID(), name: "dog", nepaliName: "कुकुर", imageName: "dog.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-dog.m4a", negativeAudioFileName: "negative_response_dog.m4a", whereIsAudioFileName: "where_is_dog.m4a", tags: []),
+            LearningObject(id: UUID(), name: "cat", nepaliName: "बिरालो", imageName: "cat.jpg", videoName: "cat.mp4", thisIsAudioFileName: "this_is_a-cat.m4a", negativeAudioFileName: "negative_response_cat.m4a", whereIsAudioFileName: "where_is_cat.m4a", tags: []),
+            LearningObject(id: UUID(), name: "tiger", nepaliName: "बाघ", imageName: "tiger.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-tiger.m4a", negativeAudioFileName: "negative_response_tiger.m4a", whereIsAudioFileName: "where_is_tiger.m4a", tags: []),
+            LearningObject(id: UUID(), name: "rhinoceros", nepaliName: "गैडा", imageName: "rhinoceros.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-rhinoceros.m4a", negativeAudioFileName: "negative_response_rhinoceros.m4a", whereIsAudioFileName: "where_is_rhinoceros.m4a", tags: []),
+            LearningObject(id: UUID(), name: "buffalo", nepaliName: "भैंसी", imageName: "buffalo.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-buffalo.m4a", negativeAudioFileName: "negative_response_buffalo.m4a", whereIsAudioFileName: "where_is_buffalo.m4a", tags: []),
+            LearningObject(id: UUID(), name: "pig", nepaliName: "सुँगुर", imageName: "pig.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-pig.m4a", negativeAudioFileName: "negative_response_pig.m4a", whereIsAudioFileName: "where_is_pig.m4a", tags: []),
+            LearningObject(id: UUID(), name: "deer", nepaliName: "हिरण", imageName: "deer.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-deer.m4a", negativeAudioFileName: "negative_response_deer.m4a", whereIsAudioFileName: "where_is_deer.m4a", tags: []),
+            LearningObject(id: UUID(), name: "alligator", nepaliName: "गोही", imageName: "alligator.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-alligator.m4a", negativeAudioFileName: "negative_response_alligator.m4a", whereIsAudioFileName: "where_is_alligator.m4a", tags: [])
         ]
 
         for var object in initialObjects {

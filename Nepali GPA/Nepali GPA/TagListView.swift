@@ -32,11 +32,12 @@ struct TagListView: View {
             .navigationTitle("Tags")
             .navigationBarItems(trailing: EditButton())
         }
+        .navigationViewStyle(.stack)
     }
 
     private func addTag() {
         guard !newTagName.isEmpty else { return }
-        let newTag = Tag(name: newTagName)
+        let newTag = Tag(name: newTagName, objects: [])
         modelContext.insert(newTag)
         try? modelContext.save()
         newTagName = ""

@@ -4,6 +4,7 @@ import SwiftData
 @main
 struct YourAppName: App {
     @StateObject private var learningViewModel: LearningViewModel
+//    @State var currentView: CurrentView = .LearnSetView
 
     init() {
         let modelContext = sharedModelContainer.mainContext
@@ -12,6 +13,7 @@ struct YourAppName: App {
 
     var body: some Scene {
         WindowGroup {
+//            LearnSetView(currentView: $currentView)
             ContentView()
                 .environmentObject(learningViewModel)
                 .onAppear {

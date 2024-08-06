@@ -9,6 +9,12 @@ struct ObjectListView: View {
     @State private var selectedObjectID: UUID?
     @State private var isAddingNewObject = false
 
+    init(sort: SortDescriptor<LearningObject>) {
+        _objects = Query(filter: #Predicate {
+            $0.name == "alligator"
+        }, sort: [sort])
+    }
+    
     var filteredObjects: [LearningObject] {
         if selectedTags.isEmpty {
             return objects

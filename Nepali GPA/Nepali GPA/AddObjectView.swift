@@ -117,7 +117,7 @@ struct AddObjectView: View {
 
     func addTag() {
         guard !newTagName.isEmpty else { return }
-        let newTag = Tag(name: newTagName)
+        let newTag = Tag(name: newTagName, objects: [])
         modelContext.insert(newTag)
         try? modelContext.save()
         newTagName = ""
@@ -241,7 +241,8 @@ struct AddObjectView: View {
             thisIsAudioFileName: "\(id.uuidString)_thisIs.m4a",
             negativeAudioFileName: "\(id.uuidString)_negative.m4a",
             whereIsAudioFileName: "\(id.uuidString)_whereIs.m4a",
-            setTags: Array(selectedTags)
+            setTags: Array(selectedTags),
+            tags: []
         )
 
         modelContext.insert(newObject)
