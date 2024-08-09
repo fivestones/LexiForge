@@ -101,6 +101,15 @@ final class LearningObject {
     }
 }
 
+extension LearningObject {
+    static func predicate(
+        tag: [Tag] //This will just take one tag, but if I want to send an array of tags I can check for each of them with a ForEach and then for each one a ` || object.tags.contains { $0.name == tag } )` kind of thing in the predicate. Maybe. Or just do a separate filter for each one, and then combine the resulting things? maybe? Not sure.
+    ) -> Predicate<LearningObject> {
+        return #Predicate<LearningObject> { object in
+            (tag.isEmpty || object.tags.contains { $0.name == tag }  )
+        }
+    }}
+
 struct Interaction: Codable {
     var date: Date
     var type: InteractionType

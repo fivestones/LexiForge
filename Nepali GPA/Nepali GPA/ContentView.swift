@@ -30,7 +30,7 @@ struct ControlView: View {
                 }
                 .tag(0)
 
-            ObjectListView(sort: SortDescriptor(\LearningObject.name))
+            ObjectListView(/*sort: SortDescriptor(\LearningObject.name), */)
                 .tabItem {
                     Label("Objects", systemImage: "list.bullet")
                 }

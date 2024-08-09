@@ -8,11 +8,30 @@ struct ObjectListView: View {
     @State private var selectedTags: Set<UUID> = []
     @State private var selectedObjectID: UUID?
     @State private var isAddingNewObject = false
+    
+    
+//    @Query(filter: #Predicate<LearningObject> { object in
+//        object.setTags == "animals"
+//    }) var objects: [LearningObject]
 
-    init(sort: SortDescriptor<LearningObject>) {
-        _objects = Query(filter: #Predicate {
-            $0.name == "alligator"
-        }, sort: [sort])
+//    init(selectedTags: Set<UUID>, selectedObjectID: UUID? = nil, isAddingNewObject: Bool = false) {
+//        self.selectedTags = selectedTags
+//        self.selectedObjectID = selectedObjectID
+//        self.isAddingNewObject = isAddingNewObject
+//    }
+    
+//    init(sort: SortDescriptor<LearningObject>) {
+//        _objects = Query(filter: #Predicate {
+//            $0.name == "alligator"
+//        }, sort: [sort])
+//    }
+    
+    // Set up the predicate for filtering the list of objects
+    init(tag: String = "") {
+        let predicate = LearningObject.predicate(tag: tags)
+        _objects = Query(filter: predicate/*, sort: [sort]*/)
+        
+        _objects = Query(filter: #Predicate<LearningObject> { object in (tag.isEmpty || object.tags.contains { $0.name == "animals" }  ) } )
     }
     
     var filteredObjects: [LearningObject] {
@@ -45,7 +64,7 @@ struct ObjectListView: View {
                 }
 
                 List {
-                    ForEach(filteredObjects) { object in
+                    ForEach(objects) { object in
                         Button(action: {
                             selectedObjectID = object.id
                         }) {
