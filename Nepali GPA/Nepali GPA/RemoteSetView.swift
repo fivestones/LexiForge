@@ -17,6 +17,15 @@ struct RemoteSetView: View {
     @State private var downloadingSet: String?
     @State private var error: String?
     
+    // Configure URLSession for optimal performance
+    private let session: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.httpMaximumConnectionsPerHost = 5  // Allow multiple concurrent connections
+        config.timeoutIntervalForResource = 60    // Longer timeout for large files
+        config.waitsForConnectivity = true        // Auto-retry on connection issues
+        return URLSession(configuration: config)
+    }()
+    
     var body: some View {
         List {
             if isLoading {
@@ -79,7 +88,161 @@ struct RemoteSetView: View {
             }
         }
     }
-    
+
+    private func downloadSet(_ setName: String) async {
+        guard let setObjects = sets[setName] else { return }
+        downloadingSet = setName
+        defer { downloadingSet = nil }
+
+        // Create a task group for parallel downloads
+        await withTaskGroup(of: (RemoteObject, [String: String])?.self) { group in
+            for object in setObjects {
+                group.addTask {
+                    do {
+                        // Download all files for this object
+                        let downloadedFiles = try await downloadObjectFiles(object)
+                        return (object, downloadedFiles)
+                    } catch {
+                        print("Error downloading files for object \(object.id): \(error)")
+                        return nil
+                    }
+                }
+            }
+
+            // Process completed downloads and create local objects
+            for await result in group {
+                guard let (object, downloadedFiles) = result else { continue }
+                
+                await MainActor.run {
+                    createLocalObject(from: object, with: downloadedFiles)
+                }
+            }
+        }
+    }
+
+    private func downloadObjectFiles(_ object: RemoteObject) async throws -> [String: String] {
+        var downloadedFiles: [String: String] = [:]
+        
+        // Create parallel tasks for each file download
+        async let imageDownload: String? = downloadFile(
+            fileName: object.imageName,
+            objectId: object.id,
+            fileType: "image"
+        )
+        
+        async let videoDownload: String? = downloadFile(
+            fileName: object.videoName,
+            objectId: object.id,
+            fileType: "video"
+        )
+        
+        async let thisIsAudioDownload: String? = downloadFile(
+            fileName: object.thisIsAudioFileName,
+            objectId: object.id,
+            fileType: "thisIs"
+        )
+        
+        async let negativeAudioDownload: String? = downloadFile(
+            fileName: object.negativeAudioFileName,
+            objectId: object.id,
+            fileType: "negative"
+        )
+        
+        async let whereIsAudioDownload: String? = downloadFile(
+            fileName: object.whereIsAudioFileName,
+            objectId: object.id,
+            fileType: "whereIs"
+        )
+
+        // Await all downloads simultaneously
+        let results = await [
+            "image": imageDownload,
+            "video": videoDownload,
+            "thisIs": thisIsAudioDownload,
+            "negative": negativeAudioDownload,
+            "whereIs": whereIsAudioDownload
+        ]
+        
+        // Filter out nil results and add to downloadedFiles
+        for (key, value) in results {
+            if let fileName = value {
+                downloadedFiles[key] = fileName
+            }
+        }
+        
+        return downloadedFiles
+    }
+
+    private func downloadFile(fileName: String?, objectId: String, fileType: String) async throws -> String? {
+        guard let fileName = fileName else { return nil }
+        
+        guard let url = networkConfig.getValidURL("uploads/\(fileName)") else {
+            throw URLError(.badURL)
+        }
+
+        let request = URLRequest(url: url)
+        let (data, response) = try await session.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw URLError(.badServerResponse)
+        }
+
+        // Generate destination filename
+        let destinationFileName = "\(objectId)-\(fileName)"
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let destination = documentsDirectory.appendingPathComponent(destinationFileName)
+
+        // Remove existing file if it exists
+        if FileManager.default.fileExists(atPath: destination.path) {
+            try FileManager.default.removeItem(at: destination)
+        }
+
+        // Write the entire file at once
+        try data.write(to: destination)
+        
+        // Update progress on main thread
+        await MainActor.run {
+            downloadProgress[objectId] = 1.0
+        }
+
+        return destinationFileName
+    }
+
+    private func createLocalObject(from remoteObject: RemoteObject, with files: [String: String]) {
+        let categories = remoteObject.categories.map { categoryName in
+            getOrCreateCategory(name: categoryName)
+        }
+        
+        let learningObject = LearningObject(
+            id: UUID(uuidString: remoteObject.id) ?? UUID(),
+            name: remoteObject.name,
+            nepaliName: remoteObject.nepaliName,
+            imageName: files["image"],
+            videoName: files["video"],
+            thisIsAudioFileName: files["thisIs"] ?? "",
+            negativeAudioFileName: files["negative"] ?? "",
+            whereIsAudioFileName: files["whereIs"] ?? "",
+            categories: categories
+        )
+
+        // Set the setCategories array with the category IDs
+        learningObject.setCategories = categories.map { $0.id }
+
+        // Update the inverse relationship
+        for category in categories {
+            if !category.objects.contains(where: { $0.id == learningObject.id }) {
+                category.objects.append(learningObject)
+            }
+        }
+        
+        modelContext.insert(learningObject)
+        try? modelContext.save()
+        
+        downloadProgress[remoteObject.id] = 1.0
+    }
+
+    // Rest of the code remains the same...
     private func fetchSets() async {
         isLoading = true
         defer { isLoading = false }
@@ -90,194 +253,33 @@ struct RemoteSetView: View {
         }
         
         do {
-            print("Creating request for URL: \(url.absoluteString)")
-            print("URL scheme: \(url.scheme ?? "no scheme")")
+            let request = URLRequest(url: url)
+            let (data, response) = try await session.data(for: request)
             
-            var request = URLRequest(url: url)
-            request.timeoutInterval = 30
-            
-            // Force HTTP
-            guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
-                self.error = "Invalid URL format"
-                return
-            }
-            var forcedComponents = components
-            forcedComponents.scheme = "http"
-            
-            guard let forcedURL = forcedComponents.url else {
-                self.error = "Could not create HTTP URL"
-                return
-            }
-            
-            request.url = forcedURL
-            print("Final request URL: \(request.url?.absoluteString ?? "none")")
-            
-            let (data, response) = try await URLSession.shared.data(for: request)
-            if let httpResponse = response as? HTTPURLResponse {
-                print("Response URL: \(httpResponse.url?.absoluteString ?? "none")")
-                print("Response status code: \(httpResponse.statusCode)")
+            guard let httpResponse = response as? HTTPURLResponse,
+                  httpResponse.statusCode == 200 else {
+                throw URLError(.badServerResponse)
             }
             
             let objects = try JSONDecoder().decode([RemoteObject].self, from: data)
             
-            // Group objects by set
-            var groupedSets: [String: [RemoteObject]] = [:]
-            for object in objects {
-                for set in object.sets {
-                    var setObjects = groupedSets[set] ?? []
-                    setObjects.append(object)
-                    groupedSets[set] = setObjects
-                }
-            }
-            
             await MainActor.run {
+                // Group objects by set
+                var groupedSets: [String: [RemoteObject]] = [:]
+                for object in objects {
+                    for set in object.sets {
+                        var setObjects = groupedSets[set] ?? []
+                        setObjects.append(object)
+                        groupedSets[set] = setObjects
+                    }
+                }
                 sets = groupedSets
             }
         } catch {
-            print("Fetch error details:")
-            print("Error domain: \((error as NSError).domain)")
-            print("Error code: \((error as NSError).code)")
-            print("Error description: \(error.localizedDescription)")
-            if let urlError = error as? URLError {
-                print("Failed URL: \(urlError.failureURLString ?? "none")")
-            }
             self.error = "Failed to fetch sets: \(error.localizedDescription)"
         }
     }
-    
-    private func downloadSet(_ setName: String) async {
-        guard let setObjects = sets[setName] else { return }
-        downloadingSet = setName
-        defer { downloadingSet = nil }
-        
-        for object in setObjects {
-            // Download each file for the object
-            let files = [
-                (object.imageName, "image"),
-                (object.videoName, "video"),
-                (object.thisIsAudioFileName, "thisIs"),
-                (object.negativeAudioFileName, "negative"),
-                (object.whereIsAudioFileName, "whereIs")
-            ]
-            
-            var downloadedFiles: [String: String] = [:]
-            
-            for (fileName, fileType) in files {
-                guard let fileName = fileName else { continue }
-                
-                do {
-                    guard let url = networkConfig.getValidURL("uploads/\(fileName)") else {
-                        throw URLError(.badURL)
-                    }
-                    let (localURL, progress) = try await downloadFile(from: url, objectId: object.id)
-                    
-                    // Observe download progress
-                    Task {
-                        for await currentProgress in progress {
-                            await MainActor.run {
-                                downloadProgress[object.id] = currentProgress
-                            }
-                        }
-                    }
-                    
-                    downloadedFiles[fileType] = localURL.lastPathComponent
-                } catch {
-                    self.error = "Failed to download \(fileType) for \(object.name)"
-                    return
-                }
-            }
-            
-            // Create local object
-            await MainActor.run {
-                print("Creating local object with:")
-                print("Image name: \(downloadedFiles["image"] ?? "none")")
-                print("ThisIs audio: \(downloadedFiles["thisIs"] ?? "none")")
-                print("Negative audio: \(downloadedFiles["negative"] ?? "none")")
-                print("WhereIs audio: \(downloadedFiles["whereIs"] ?? "none")")
-                let categories = object.categories.map { categoryName in
-                    getOrCreateCategory(name: categoryName)
-                }
-                
-                let learningObject = LearningObject(
-                    id: UUID(uuidString: object.id) ?? UUID(),
-                    name: object.name,
-                    nepaliName: object.nepaliName,
-                    imageName: downloadedFiles["image"],
-                    videoName: downloadedFiles["video"],
-                    thisIsAudioFileName: downloadedFiles["thisIs"] ?? "",
-                    negativeAudioFileName: downloadedFiles["negative"] ?? "",
-                    whereIsAudioFileName: downloadedFiles["whereIs"] ?? "",
-                    categories: categories
-                )
 
-                // Set the setCategories array with the category IDs
-                learningObject.setCategories = categories.map { $0.id }
-
-                // Also update the inverse relationship
-                for category in categories {
-                    if !category.objects.contains(where: { $0.id == learningObject.id }) {
-                        category.objects.append(learningObject)
-                    }
-                }
-                
-                modelContext.insert(learningObject)
-                try? modelContext.save()
-                
-                downloadProgress[object.id] = 1.0
-            }
-        }
-    }
-    
-    private func downloadFile(from url: URL, objectId: String) async throws -> (URL, AsyncStream<Double>) {
-        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let destination = documentsDirectory.appendingPathComponent(url.lastPathComponent)
-        
-        // Delete existing file if it exists
-        if FileManager.default.fileExists(atPath: destination.path) {
-            try FileManager.default.removeItem(at: destination)
-        }
-        
-        // Create URL request
-        var request = URLRequest(url: url)
-        request.timeoutInterval = 30
-        
-        // Download data
-        let (asyncBytes, response) = try await URLSession.shared.bytes(for: request)
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw URLError(.badServerResponse)
-        }
-        
-        let expectedLength = Int(httpResponse.expectedContentLength)
-        var receivedLength = 0
-        
-        // Create file and get handle
-        FileManager.default.createFile(atPath: destination.path, contents: nil)
-        let fileHandle = try FileHandle(forWritingTo: destination)
-        
-        // Create progress stream
-        let progress = AsyncStream<Double> { continuation in
-            Task {
-                do {
-                    for try await byte in asyncBytes {
-                        try fileHandle.write(contentsOf: [byte])
-                        receivedLength += 1
-                        let progress = Double(receivedLength) / Double(expectedLength)
-                        continuation.yield(progress)
-                    }
-                    try fileHandle.close()
-                    continuation.finish()
-                } catch {
-                    print("Error writing file: \(error)")
-                    try? fileHandle.close()
-                    continuation.finish()
-                }
-            }
-        }
-        
-        return (destination, progress)
-    }
-    
     private func getOrCreateCategory(name: String) -> Category {
         let fetchDescriptor = FetchDescriptor<Category>(
             predicate: #Predicate<Category> { $0.name == name }
