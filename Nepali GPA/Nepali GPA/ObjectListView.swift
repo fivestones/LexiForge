@@ -3,59 +3,32 @@ import SwiftData
 
 struct ObjectListView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var objects: [LearningObject]
-    @Query private var tags: [Tag]
-    @State private var selectedTags: Set<UUID> = []
+    @Query private var objects: [LearningObject]  // Query all LearningObjects
+    @Query private var categories: [Category]    // Query all Categories
+    @State private var selectedCategories: Set<UUID> = []
     @State private var selectedObjectID: UUID?
     @State private var isAddingNewObject = false
     
-    
-//    @Query(filter: #Predicate<LearningObject> { object in
-//        object.setTags == "animals"
-//    }) var objects: [LearningObject]
-
-//    init(selectedTags: Set<UUID>, selectedObjectID: UUID? = nil, isAddingNewObject: Bool = false) {
-//        self.selectedTags = selectedTags
-//        self.selectedObjectID = selectedObjectID
-//        self.isAddingNewObject = isAddingNewObject
-//    }
-    
-//    init(sort: SortDescriptor<LearningObject>) {
-//        _objects = Query(filter: #Predicate {
-//            $0.name == "alligator"
-//        }, sort: [sort])
-//    }
-    
-    // Set up the predicate for filtering the list of objects
-    init(tag: String = "") {
-        let predicate = LearningObject.predicate(tag: tags)
-        _objects = Query(filter: predicate/*, sort: [sort]*/)
-        
-        _objects = Query(filter: #Predicate<LearningObject> { object in (tag.isEmpty || object.tags.contains { $0.name == "animals" }  ) } )
-    }
-    
     var filteredObjects: [LearningObject] {
-        if selectedTags.isEmpty {
-            return objects
-        } else {
-            return objects.filter { object in
-                !selectedTags.isDisjoint(with: object.setTags)
-            }
+        objects.filter { object in
+            // Only filter by selected categories
+            selectedCategories.isEmpty ||
+                !selectedCategories.isDisjoint(with: object.setCategories)
         }
     }
 
     var body: some View {
         NavigationStack {
             VStack {
-                // Tag Filter Section
+                // Category Filter Section
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack {
-                        ForEach(tags) { tag in
-                            TagFilterView(tag: tag, isSelected: selectedTags.contains(tag.id)) {
-                                if selectedTags.contains(tag.id) {
-                                    selectedTags.remove(tag.id)
+                        ForEach(categories) { category in
+                            CategoryFilterView(category: category, isSelected: selectedCategories.contains(category.id)) {
+                                if selectedCategories.contains(category.id) {
+                                    selectedCategories.remove(category.id)
                                 } else {
-                                    selectedTags.insert(tag.id)
+                                    selectedCategories.insert(category.id)
                                 }
                             }
                         }
@@ -64,7 +37,7 @@ struct ObjectListView: View {
                 }
 
                 List {
-                    ForEach(objects) { object in
+                    ForEach(filteredObjects) { object in
                         Button(action: {
                             selectedObjectID = object.id
                         }) {
@@ -149,13 +122,13 @@ struct ObjectListView: View {
     }
 }
 
-struct TagFilterView: View {
-    let tag: Tag
+struct CategoryFilterView: View {
+    let category: Category
     let isSelected: Bool
     let action: () -> Void
 
     var body: some View {
-        Text(tag.name)
+        Text(category.name)
             .padding(8)
             .background(isSelected ? Color.blue : Color.gray)
             .foregroundColor(.white)

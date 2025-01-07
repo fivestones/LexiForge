@@ -90,6 +90,10 @@
 		639ED96C2C25E3E500FA666C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 639ED96B2C25E3E500FA666C /* Assets.xcassets */; };
 		639ED96F2C25E3E500FA666C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 639ED96E2C25E3E500FA666C /* Preview Assets.xcassets */; };
 		639ED97A2C26CE4D00FA666C /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 639ED9792C26CE4D00FA666C /* VideoPlayerView.swift */; };
+		63C43F542D2D205A00A968A8 /* NetworkConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63C43F532D2D205300A968A8 /* NetworkConfig.swift */; };
+		63C43F562D2D20C000A968A8 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63C43F552D2D20BD00A968A8 /* SettingsView.swift */; };
+		63C43F582D2D20DF00A968A8 /* RemoteObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63C43F572D2D20DB00A968A8 /* RemoteObject.swift */; };
+		63C43F5A2D2D20F900A968A8 /* RemoteSetView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63C43F592D2D20F500A968A8 /* RemoteSetView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -177,6 +181,11 @@
 		639ED96B2C25E3E500FA666C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		639ED96E2C25E3E500FA666C /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		639ED9792C26CE4D00FA666C /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
+		63C43F532D2D205300A968A8 /* NetworkConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkConfig.swift; sourceTree = "<group>"; };
+		63C43F552D2D20BD00A968A8 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		63C43F572D2D20DB00A968A8 /* RemoteObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteObject.swift; sourceTree = "<group>"; };
+		63C43F592D2D20F500A968A8 /* RemoteSetView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteSetView.swift; sourceTree = "<group>"; };
+		63C43F5E2D2D250B00A968A8 /* Nepali-GPA-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Nepali-GPA-Info.plist"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -285,6 +294,9 @@
 		639ED9662C25E3E300FA666C /* Nepali GPA */ = {
 			isa = PBXGroup;
 			children = (
+				63C43F5E2D2D250B00A968A8 /* Nepali-GPA-Info.plist */,
+				63C43F532D2D205300A968A8 /* NetworkConfig.swift */,
+				63C43F552D2D20BD00A968A8 /* SettingsView.swift */,
 				637238352C2A6F150004C0C1 /* LearningObject.swift */,
 				639ED9672C25E3E300FA666C /* Nepali_GPAApp.swift */,
 				639ED9692C25E3E300FA666C /* LearnSetView.swift */,
@@ -299,6 +311,8 @@
 				63133E052C51EFA80011006A /* ObjectListView.swift */,
 				63133E072C51F0E80011006A /* EditObjectView.swift */,
 				6398ACAD2C54E0080070898A /* LearnOptionsView.swift */,
+				63C43F592D2D20F500A968A8 /* RemoteSetView.swift */,
+				63C43F572D2D20DB00A968A8 /* RemoteObject.swift */,
 				634A8DF32C54E622008D6F85 /* LearningViewModel.swift */,
 			);
 			path = "Nepali GPA";
@@ -452,15 +466,19 @@
 			buildActionMask = 2147483647;
 			files = (
 				637238362C2A6F150004C0C1 /* LearningObject.swift in Sources */,
+				63C43F5A2D2D20F900A968A8 /* RemoteSetView.swift in Sources */,
 				632756512C482D3300B92DBC /* GenericAudioFileModel.swift in Sources */,
 				631D5CCE2C4175F700D793E2 /* ContentView.swift in Sources */,
 				639ED96A2C25E3E300FA666C /* LearnSetView.swift in Sources */,
 				63133E062C51EFA80011006A /* ObjectListView.swift in Sources */,
 				631D5CD02C41762600D793E2 /* AddObjectView.swift in Sources */,
 				634A8DF42C54E622008D6F85 /* LearningViewModel.swift in Sources */,
+				63C43F562D2D20C000A968A8 /* SettingsView.swift in Sources */,
+				63C43F542D2D205A00A968A8 /* NetworkConfig.swift in Sources */,
 				639ED9682C25E3E300FA666C /* Nepali_GPAApp.swift in Sources */,
 				639C3D402C4AA17400049469 /* TagListView.swift in Sources */,
 				63133E082C51F0E80011006A /* EditObjectView.swift in Sources */,
+				63C43F582D2D20DF00A968A8 /* RemoteObject.swift in Sources */,
 				6398ACAE2C54E0080070898A /* LearnOptionsView.swift in Sources */,
 				639ED97A2C26CE4D00FA666C /* VideoPlayerView.swift in Sources */,
 			);
@@ -599,6 +617,7 @@
 				DEVELOPMENT_TEAM = GBG5KW4JL8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Nepali-GPA-Info.plist";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Need to record audio to make new audio files for the app";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -629,6 +648,7 @@
 				DEVELOPMENT_TEAM = GBG5KW4JL8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Nepali-GPA-Info.plist";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Need to record audio to make new audio files for the app";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

@@ -2,8 +2,8 @@ import SwiftData
 import Foundation
 
 @Model
-final class Tag: Identifiable {
-    var id: UUID
+final class Category: Identifiable {
+    var id: UUID //remove this maybe?
     var name: String
     
     var objects: [LearningObject]
@@ -29,14 +29,14 @@ final class LearningObject {
     @Attribute(.externalStorage) var askedHistory: [Date] = []
     var introducedHistory: Date?
     var questionHistory: Int?
-    @Attribute(.externalStorage) var setTags: [UUID] = []
+    @Attribute(.externalStorage) var setCategories: [UUID] = []
     var partOfSpeechTag: UUID?
-    @Relationship(inverse: \Tag.objects) var tags: [Tag]
+    @Relationship(inverse: \Category.objects) var categories: [Category]
 
     init(id: UUID = UUID(), name: String, nepaliName: String, imageName: String? = nil, videoName: String? = nil,
          thisIsAudioFileName: String, negativeAudioFileName: String, whereIsAudioFileName: String,
          history: [Interaction] = [], askedHistory: [Date] = [], introducedHistory: Date? = nil,
-         questionHistory: Int? = nil, setTags: [UUID] = [], partOfSpeechTag: UUID? = nil, tags: [Tag]) {
+         questionHistory: Int? = nil, setCategories: [UUID] = [], partOfSpeechTag: UUID? = nil, categories: [Category]) {
         self.id = id
         self.name = name
         self.nepaliName = nepaliName
@@ -49,9 +49,9 @@ final class LearningObject {
         self.askedHistory = askedHistory
         self.introducedHistory = introducedHistory
         self.questionHistory = questionHistory
-        self.setTags = setTags
+        self.setCategories = setCategories
         self.partOfSpeechTag = partOfSpeechTag
-        self.tags = tags
+        self.categories = categories
     }
     
     @Transient
@@ -102,13 +102,27 @@ final class LearningObject {
 }
 
 extension LearningObject {
-    static func predicate(
-        tag: [Tag] //This will just take one tag, but if I want to send an array of tags I can check for each of them with a ForEach and then for each one a ` || object.tags.contains { $0.name == tag } )` kind of thing in the predicate. Maybe. Or just do a separate filter for each one, and then combine the resulting things? maybe? Not sure.
-    ) -> Predicate<LearningObject> {
-        return #Predicate<LearningObject> { object in
-            (tag.isEmpty || object.tags.contains { $0.name == tag }  )
+    static func predicate(categories: [Category]) -> Predicate<LearningObject> {
+        // First, check if we have any categories to filter by
+        guard !categories.isEmpty else {
+            return #Predicate<LearningObject> { _ in true }
         }
-    }}
+        
+        let categoryName = categories[0].name
+        
+        // If category name is empty, return all objects
+        if categoryName.isEmpty {
+            return #Predicate<LearningObject> { _ in true }
+        }
+        
+        // Filter objects that have a category matching the name
+        return #Predicate<LearningObject> { object in
+            object.categories.contains { category in
+                category.name.contains(categoryName)
+            }
+        }
+    }
+}
 
 struct Interaction: Codable {
     var date: Date

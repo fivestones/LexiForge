@@ -6,7 +6,7 @@ import PhotosUI
 struct AddObjectView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-    @Query private var tags: [Tag]
+    @Query private var categories: [Category]
     @State private var name = ""
     @State private var nepaliName = ""
     @State private var selectedItem: PhotosPickerItem?
@@ -18,8 +18,8 @@ struct AddObjectView: View {
     @State private var whereIsAudioURL: URL?
     @State private var audioRecorder: AVAudioRecorder?
     @State private var currentRecordingType: RecordingType?
-    @State private var selectedTags: Set<UUID> = []
-    @State private var newTagName: String = ""
+    @State private var selectedCategories: Set<UUID> = []
+    @State private var newCategoryName: String = ""
 
     enum RecordingType {
         case thisIs, negative, whereIs
@@ -27,11 +27,13 @@ struct AddObjectView: View {
 
     var body: some View {
         Form {
+            // Basic Information section remains the same
             Section(header: Text("Basic Information")) {
                 TextField("Name (English)", text: $name)
                 TextField("Name (Nepali)", text: $nepaliName)
             }
 
+            // Image/Video section remains the same
             Section(header: Text("Image or Video")) {
                 PhotosPicker(selection: $selectedItem, matching: .any(of: [.images, .videos])) {
                     Text("Select Image or Video")
@@ -68,39 +70,40 @@ struct AddObjectView: View {
                 }
             }
 
+            // Audio Recordings section remains the same
             Section(header: Text("Audio Recordings")) {
                 recordButton(for: .thisIs, label: "This is...")
                 recordButton(for: .negative, label: "Negative response")
                 recordButton(for: .whereIs, label: "Where is...")
             }
 
-            Section(header: Text("Tags")) {
+            Section(header: Text("Categories")) {
                 List {
-                    ForEach(tags) { tag in
+                    ForEach(categories) { category in
                         HStack {
-                            Text(tag.name)
+                            Text(category.name)
                             Spacer()
-                            if selectedTags.contains(tag.id) {
+                            if selectedCategories.contains(category.id) {
                                 Image(systemName: "checkmark")
                             }
                         }
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            if selectedTags.contains(tag.id) {
-                                selectedTags.remove(tag.id)
+                            if selectedCategories.contains(category.id) {
+                                selectedCategories.remove(category.id)
                             } else {
-                                selectedTags.insert(tag.id)
+                                selectedCategories.insert(category.id)
                             }
                         }
                     }
                 }
 
                 HStack {
-                    TextField("New Tag", text: $newTagName)
+                    TextField("New Category", text: $newCategoryName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding()
 
-                    Button(action: addTag) {
+                    Button(action: addCategory) {
                         Image(systemName: "plus.circle.fill")
                             .font(.title)
                             .padding()
@@ -115,12 +118,12 @@ struct AddObjectView: View {
         .navigationTitle("Add New Object")
     }
 
-    func addTag() {
-        guard !newTagName.isEmpty else { return }
-        let newTag = Tag(name: newTagName, objects: [])
-        modelContext.insert(newTag)
+    func addCategory() {
+        guard !newCategoryName.isEmpty else { return }
+        let newCategory = Category(name: newCategoryName, objects: [])
+        modelContext.insert(newCategory)
         try? modelContext.save()
-        newTagName = ""
+        newCategoryName = ""
     }
 
     func recordButton(for type: RecordingType, label: String) -> some View {
@@ -231,6 +234,7 @@ struct AddObjectView: View {
         }
 
         let id = UUID()
+        let selectedCategoryObjects = categories.filter { selectedCategories.contains($0.id) }
 
         let newObject = LearningObject(
             id: id,
@@ -241,20 +245,20 @@ struct AddObjectView: View {
             thisIsAudioFileName: "\(id.uuidString)_thisIs.m4a",
             negativeAudioFileName: "\(id.uuidString)_negative.m4a",
             whereIsAudioFileName: "\(id.uuidString)_whereIs.m4a",
-            setTags: Array(selectedTags),
-            tags: []
+            setCategories: Array(selectedCategories),
+            categories: selectedCategoryObjects
         )
 
         modelContext.insert(newObject)
 
-        // Save image or video
+        // Save media files
         if let imageData = selectedImageData {
             saveMedia(data: imageData, name: "\(id.uuidString).jpg")
         } else if let videoData = selectedVideoData {
             saveMedia(data: videoData, name: "\(id.uuidString).mp4")
         }
 
-        // Move audio files to app's document directory
+        // Move audio files
         moveAudioFile(from: thisIsAudioURL, to: "\(id.uuidString)_thisIs.m4a")
         moveAudioFile(from: negativeAudioURL, to: "\(id.uuidString)_negative.m4a")
         moveAudioFile(from: whereIsAudioURL, to: "\(id.uuidString)_whereIs.m4a")

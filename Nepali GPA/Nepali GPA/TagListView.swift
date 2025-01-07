@@ -1,27 +1,27 @@
 import SwiftUI
 import SwiftData
 
-struct TagListView: View {
+struct CategoryListView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var tags: [Tag]
-    @State private var newTagName: String = ""
+    @Query private var categories: [Category]
+    @State private var newCategoryName: String = ""
 
     var body: some View {
         NavigationView {
             VStack {
                 List {
-                    ForEach(tags) { tag in
-                        Text(tag.name)
+                    ForEach(categories) { category in
+                        Text(category.name)
                     }
-                    .onDelete(perform: deleteTags)
+                    .onDelete(perform: deleteCategories)
                 }
 
                 HStack {
-                    TextField("New Tag", text: $newTagName)
+                    TextField("New Tag", text: $newCategoryName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding()
 
-                    Button(action: addTag) {
+                    Button(action: addCategory) {
                         Image(systemName: "plus.circle.fill")
                             .font(.title)
                             .padding()
@@ -35,18 +35,18 @@ struct TagListView: View {
         .navigationViewStyle(.stack)
     }
 
-    private func addTag() {
-        guard !newTagName.isEmpty else { return }
-        let newTag = Tag(name: newTagName, objects: [])
-        modelContext.insert(newTag)
+    private func addCategory() {
+        guard !newCategoryName.isEmpty else { return }
+        let newCategory = Category(name: newCategoryName, objects: [])
+        modelContext.insert(newCategory)
         try? modelContext.save()
-        newTagName = ""
+        newCategoryName = ""
     }
 
-    private func deleteTags(at offsets: IndexSet) {
+    private func deleteCategories(at offsets: IndexSet) {
         for index in offsets {
-            let tag = tags[index]
-            modelContext.delete(tag)
+            let category = categories[index]
+            modelContext.delete(category)
         }
         try? modelContext.save()
     }

@@ -7,7 +7,7 @@ struct EditObjectView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Binding var object: LearningObject
-    @Query private var tags: [Tag]
+    @Query private var categories: [Category]
     @State private var selectedItem: PhotosPickerItem?
     @State private var selectedImageData: Data?
     @State private var selectedVideoData: Data?
@@ -17,8 +17,8 @@ struct EditObjectView: View {
     @State private var whereIsAudioURL: URL?
     @State private var audioRecorder: AVAudioRecorder?
     @State private var currentRecordingType: RecordingType?
-    @State private var selectedTags: Set<UUID>
-    @State private var newTagName: String = ""
+    @State private var selectedCategories: Set<UUID>
+    @State private var newCategoryName: String = ""
 
     enum RecordingType {
         case thisIs, negative, whereIs
@@ -26,11 +26,12 @@ struct EditObjectView: View {
 
     init(object: Binding<LearningObject>) {
         _object = object
-        _selectedTags = State(initialValue: Set(object.wrappedValue.setTags))
+        _selectedCategories = State(initialValue: Set(object.wrappedValue.setCategories))
     }
 
     var body: some View {
         Form {
+            // Basic Information section
             Section(header: Text("Basic Information")) {
                 TextField("Name (English)", text: $object.name)
                 TextField("Name (Nepali)", text: $object.nepaliName)
@@ -87,39 +88,40 @@ struct EditObjectView: View {
                 }
             }
 
+            // Audio Recordings section
             Section(header: Text("Audio Recordings")) {
                 recordButton(for: .thisIs, label: "This is...", url: $thisIsAudioURL, existingFileName: object.thisIsAudioFileName)
                 recordButton(for: .negative, label: "Negative response", url: $negativeAudioURL, existingFileName: object.negativeAudioFileName)
                 recordButton(for: .whereIs, label: "Where is...", url: $whereIsAudioURL, existingFileName: object.whereIsAudioFileName)
             }
 
-            Section(header: Text("Tags")) {
+            Section(header: Text("Categories")) {
                 List {
-                    ForEach(tags) { tag in
+                    ForEach(categories) { category in
                         HStack {
-                            Text(tag.name)
+                            Text(category.name)
                             Spacer()
-                            if selectedTags.contains(tag.id) {
+                            if selectedCategories.contains(category.id) {
                                 Image(systemName: "checkmark")
                             }
                         }
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            if selectedTags.contains(tag.id) {
-                                selectedTags.remove(tag.id)
+                            if selectedCategories.contains(category.id) {
+                                selectedCategories.remove(category.id)
                             } else {
-                                selectedTags.insert(tag.id)
+                                selectedCategories.insert(category.id)
                             }
                         }
                     }
                 }
 
                 HStack {
-                    TextField("New Tag", text: $newTagName)
+                    TextField("New Category", text: $newCategoryName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding()
 
-                    Button(action: addTag) {
+                    Button(action: addCategory) {
                         Image(systemName: "plus.circle.fill")
                             .font(.title)
                             .padding()
@@ -134,12 +136,12 @@ struct EditObjectView: View {
         .navigationTitle("Edit Object")
     }
 
-    func addTag() {
-        guard !newTagName.isEmpty else { return }
-        let newTag = Tag(name: newTagName, objects: [])
-        modelContext.insert(newTag)
+    func addCategory() {
+        guard !newCategoryName.isEmpty else { return }
+        let newCategory = Category(name: newCategoryName, objects: [])
+        modelContext.insert(newCategory)
         try? modelContext.save()
-        newTagName = ""
+        newCategoryName = ""
     }
 
     func recordButton(for type: RecordingType, label: String, url: Binding<URL?>, existingFileName: String) -> some View {
@@ -247,8 +249,13 @@ struct EditObjectView: View {
     }
 
     func saveObject() {
-        object.setTags = Array(selectedTags)
+        object.setCategories = Array(selectedCategories)
+        
+        // Update the object's categories relationship
+        let selectedCategoryObjects = categories.filter { selectedCategories.contains($0.id) }
+        object.categories = selectedCategoryObjects
 
+        // Rest of the saveObject implementation remains the same
         if let selectedImageData {
             saveMedia(data: selectedImageData, name: "\(object.id.uuidString).jpg")
             object.imageName = "\(object.id.uuidString).jpg"
@@ -257,6 +264,7 @@ struct EditObjectView: View {
             object.videoName = "\(object.id.uuidString).mp4"
         }
 
+        // Handle audio files
         if let thisIsAudioURL {
             moveAudioFile(from: thisIsAudioURL, to: "\(object.id.uuidString)_thisIs.m4a")
             object.thisIsAudioFileName = "\(object.id.uuidString)_thisIs.m4a"

@@ -21,7 +21,7 @@ class LearningViewModel: ObservableObject {
     @Published var currentQuestionObject: LearningObject? = nil
     @Published var currentIntroductionObject: LearningObject? = nil
     @Published var genericAudioFiles: [GenericAudioFile] = []
-    @Published var currentTag: Tag?
+    @Published var currentCategory: Category?
     
     let modelContext: ModelContext
 
@@ -101,8 +101,16 @@ class LearningViewModel: ObservableObject {
     private func getGenericAudioFile(named: String) -> String? {
         return genericAudioFiles.first { $0.fileName.contains(named) }?.fileName
     }
-
-
+    
+    func setCurrentCategory(_ category: Category) {
+        self.currentCategory = category
+        // Filter allObjects to only include objects from the selected category
+        allObjects = allObjects.filter { object in
+            object.setCategories.contains(category.id)
+        }
+        // Reset currentObjects to empty - they will be introduced one by one
+        currentObjects = []
+    }
     
     public func loadAllObjects() {
         let descriptor = FetchDescriptor<LearningObject>(sortBy: [SortDescriptor(\.name)])
@@ -129,40 +137,40 @@ class LearningViewModel: ObservableObject {
         }
 
     private func addInitialObjectsIfNeeded() {
-        // First, ensure the 'animals' tag exists
-        let animalTag: Tag
-        let fetchRequest = FetchDescriptor<Tag>(predicate: #Predicate { $0.name == "animals" })
+        // First, ensure the 'animals' category exists
+        let animalCategory: Category
+        let fetchRequest = FetchDescriptor<Category>(predicate: #Predicate { $0.name == "animals" })
         
         do {
-            if let existingTag = try modelContext.fetch(fetchRequest).first {
-                animalTag = existingTag
-                print("Using existing 'animals' tag")
+            if let existingCategory = try modelContext.fetch(fetchRequest).first {
+                animalCategory = existingCategory
+                print("Using existing 'animals' category")
             } else {
-                animalTag = Tag(name: "animals", objects: [])
-                modelContext.insert(animalTag)
-                print("Created new 'animals' tag")
+                animalCategory = Category(name: "animals", objects: [])
+                modelContext.insert(animalCategory)
+                print("Created new 'animals' category")
             }
         } catch {
-            print("Error fetching 'animals' tag: \(error)")
-            // Create a new tag if we couldn't fetch existing ones
-            animalTag = Tag(name: "animals", objects: [])
-            modelContext.insert(animalTag)
-            print("Created new 'animals' tag after fetch error")
+            print("Error fetching 'animals' category: \(error)")
+            // Create a new category if we couldn't fetch existing ones
+            animalCategory = Category(name: "animals", objects: [])
+            modelContext.insert(animalCategory)
+            print("Created new 'animals' category after fetch error")
         }
         
         let initialObjects = [
-            LearningObject(id: UUID(), name: "horse", nepaliName: "घोडा", imageName: nil, videoName: "horse.mp4", thisIsAudioFileName: "this_is_a-horse.m4a", negativeAudioFileName: "negative_response_horse.m4a", whereIsAudioFileName: "where_is_horse.m4a", tags: []),
-            LearningObject(id: UUID(), name: "cow", nepaliName: "गाई", imageName: "cow.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-cow.m4a", negativeAudioFileName: "negative_response_cow.m4a", whereIsAudioFileName: "where_is_cow.m4a", tags: []),
-            LearningObject(id: UUID(), name: "sheep", nepaliName: "भेंडा", imageName: "sheep.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-sheep.m4a", negativeAudioFileName: "negative_response_sheep.m4a", whereIsAudioFileName: "where_is_sheep.m4a", tags: []),
-            LearningObject(id: UUID(), name: "goat", nepaliName: "बाख्रा", imageName: "goat.jpg", videoName: "goat.mp4", thisIsAudioFileName: "this_is_a-goat.m4a", negativeAudioFileName: "negative_response_goat.m4a", whereIsAudioFileName: "where_is_goat.m4a", tags: []),
-            LearningObject(id: UUID(), name: "dog", nepaliName: "कुकुर", imageName: "dog.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-dog.m4a", negativeAudioFileName: "negative_response_dog.m4a", whereIsAudioFileName: "where_is_dog.m4a", tags: []),
-            LearningObject(id: UUID(), name: "cat", nepaliName: "बिरालो", imageName: "cat.jpg", videoName: "cat.mp4", thisIsAudioFileName: "this_is_a-cat.m4a", negativeAudioFileName: "negative_response_cat.m4a", whereIsAudioFileName: "where_is_cat.m4a", tags: []),
-            LearningObject(id: UUID(), name: "tiger", nepaliName: "बाघ", imageName: "tiger.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-tiger.m4a", negativeAudioFileName: "negative_response_tiger.m4a", whereIsAudioFileName: "where_is_tiger.m4a", tags: []),
-            LearningObject(id: UUID(), name: "rhinoceros", nepaliName: "गैडा", imageName: "rhinoceros.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-rhinoceros.m4a", negativeAudioFileName: "negative_response_rhinoceros.m4a", whereIsAudioFileName: "where_is_rhinoceros.m4a", tags: []),
-            LearningObject(id: UUID(), name: "buffalo", nepaliName: "भैंसी", imageName: "buffalo.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-buffalo.m4a", negativeAudioFileName: "negative_response_buffalo.m4a", whereIsAudioFileName: "where_is_buffalo.m4a", tags: []),
-            LearningObject(id: UUID(), name: "pig", nepaliName: "सुँगुर", imageName: "pig.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-pig.m4a", negativeAudioFileName: "negative_response_pig.m4a", whereIsAudioFileName: "where_is_pig.m4a", tags: []),
-            LearningObject(id: UUID(), name: "deer", nepaliName: "हिरण", imageName: "deer.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-deer.m4a", negativeAudioFileName: "negative_response_deer.m4a", whereIsAudioFileName: "where_is_deer.m4a", tags: []),
-            LearningObject(id: UUID(), name: "alligator", nepaliName: "गोही", imageName: "alligator.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-alligator.m4a", negativeAudioFileName: "negative_response_alligator.m4a", whereIsAudioFileName: "where_is_alligator.m4a", tags: [])
+            LearningObject(id: UUID(), name: "horse", nepaliName: "घोडा", imageName: nil, videoName: "horse.mp4", thisIsAudioFileName: "this_is_a-horse.m4a", negativeAudioFileName: "negative_response_horse.m4a", whereIsAudioFileName: "where_is_horse.m4a", categories: []),
+            LearningObject(id: UUID(), name: "cow", nepaliName: "गाई", imageName: "cow.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-cow.m4a", negativeAudioFileName: "negative_response_cow.m4a", whereIsAudioFileName: "where_is_cow.m4a", categories: []),
+            LearningObject(id: UUID(), name: "sheep", nepaliName: "भेंडा", imageName: "sheep.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-sheep.m4a", negativeAudioFileName: "negative_response_sheep.m4a", whereIsAudioFileName: "where_is_sheep.m4a", categories: []),
+            LearningObject(id: UUID(), name: "goat", nepaliName: "बाख्रा", imageName: "goat.jpg", videoName: "goat.mp4", thisIsAudioFileName: "this_is_a-goat.m4a", negativeAudioFileName: "negative_response_goat.m4a", whereIsAudioFileName: "where_is_goat.m4a", categories: []),
+            LearningObject(id: UUID(), name: "dog", nepaliName: "कुकुर", imageName: "dog.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-dog.m4a", negativeAudioFileName: "negative_response_dog.m4a", whereIsAudioFileName: "where_is_dog.m4a", categories: []),
+            LearningObject(id: UUID(), name: "cat", nepaliName: "बिरालो", imageName: "cat.jpg", videoName: "cat.mp4", thisIsAudioFileName: "this_is_a-cat.m4a", negativeAudioFileName: "negative_response_cat.m4a", whereIsAudioFileName: "where_is_cat.m4a", categories: []),
+            LearningObject(id: UUID(), name: "tiger", nepaliName: "बाघ", imageName: "tiger.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-tiger.m4a", negativeAudioFileName: "negative_response_tiger.m4a", whereIsAudioFileName: "where_is_tiger.m4a", categories: []),
+            LearningObject(id: UUID(), name: "rhinoceros", nepaliName: "गैडा", imageName: "rhinoceros.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-rhinoceros.m4a", negativeAudioFileName: "negative_response_rhinoceros.m4a", whereIsAudioFileName: "where_is_rhinoceros.m4a", categories: []),
+            LearningObject(id: UUID(), name: "buffalo", nepaliName: "भैंसी", imageName: "buffalo.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-buffalo.m4a", negativeAudioFileName: "negative_response_buffalo.m4a", whereIsAudioFileName: "where_is_buffalo.m4a", categories: []),
+            LearningObject(id: UUID(), name: "pig", nepaliName: "सुँगुर", imageName: "pig.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-pig.m4a", negativeAudioFileName: "negative_response_pig.m4a", whereIsAudioFileName: "where_is_pig.m4a", categories: []),
+            LearningObject(id: UUID(), name: "deer", nepaliName: "हिरण", imageName: "deer.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-deer.m4a", negativeAudioFileName: "negative_response_deer.m4a", whereIsAudioFileName: "where_is_deer.m4a", categories: []),
+            LearningObject(id: UUID(), name: "alligator", nepaliName: "गोही", imageName: "alligator.jpg", videoName: nil, thisIsAudioFileName: "this_is_a-alligator.m4a", negativeAudioFileName: "negative_response_alligator.m4a", whereIsAudioFileName: "where_is_alligator.m4a", categories: [])
         ]
 
         for var object in initialObjects {
@@ -190,19 +198,19 @@ class LearningViewModel: ObservableObject {
                 object.negativeAudioFileName = copyResourceToDocumentsDirectory(resourceName: object.negativeAudioFileName, for: object.id)
                 object.whereIsAudioFileName = copyResourceToDocumentsDirectory(resourceName: object.whereIsAudioFileName, for: object.id)
                 
-                // Add the 'animals' tag to the object
-                object.setTags.append(animalTag.id)
+                // Add the 'animals' category to the object
+                object.setCategories.append(animalCategory.id)
                 
                 modelContext.insert(object)
-                print("Added new object: \(object.name) with 'animals' tag")
+                print("Added new object: \(object.name) with 'animals' category")
             } else {
-                // If the object already exists, ensure it has the 'animals' tag
+                // If the object already exists, ensure it has the 'animals' category
                 if let existingObject = allObjects.first(where: { $0.name == object.name }) {
-                    if !existingObject.setTags.contains(animalTag.id) {
-                        existingObject.setTags.append(animalTag.id)
-                        print("Added 'animals' tag to existing object: \(existingObject.name)")
+                    if !existingObject.setCategories.contains(animalCategory.id) {
+                        existingObject.setCategories.append(animalCategory.id)
+                        print("Added 'animals' category to existing object: \(existingObject.name)")
                     } else {
-                        print("Object already exists with 'animals' tag: \(object.name)")
+                        print("Object already exists with 'animals' category: \(object.name)")
                     }
                 }
             }

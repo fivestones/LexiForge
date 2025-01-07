@@ -4,21 +4,21 @@ import SwiftData
 struct LearnOptionsView: View {
     @Binding var currentView: CurrentView
     @EnvironmentObject private var learningViewModel: LearningViewModel
-    @Query private var tags: [Tag]
-    @State private var selectedTag: Tag?
+    @Query private var categories: [Category]
+    @State private var selectedCategory: Category?
     @State private var showLearnSetView = false
 
     var body: some View {
         VStack {
-            Text("Select a tag to start learning")
+            Text("Select a Category to start learning")
                 .font(.title)
                 .padding()
 
             ScrollView {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 120))], spacing: 20) {
-                    ForEach(tags) { tag in
-                        TagButton(tag: tag, isSelected: selectedTag == tag) {
-                            selectedTag = tag
+                    ForEach(categories) { category in
+                        CategoryButton(category: category, isSelected: selectedCategory == category) {
+                            selectedCategory = category
                         }
                     }
                 }
@@ -26,16 +26,17 @@ struct LearnOptionsView: View {
             }
 
             Button("Start Learning") {
-                if let tag = selectedTag {
-                    // learningViewModel.setCurrentTag(tag)
+                if let category = selectedCategory {
+                    // learningViewModel.setCurrentCategory(category)
+                    learningViewModel.setCurrentCategory(category)
                     showLearnSetView = true
                 }
                 currentView = CurrentView.LearnSetView
 //                showLearnSetView = true
             }
-            .disabled(selectedTag == nil)
+            .disabled(selectedCategory == nil)
             .padding()
-            .background(selectedTag != nil ? Color.blue : Color.gray)
+            .background(selectedCategory != nil ? Color.blue : Color.gray)
             .foregroundColor(.white)
             .cornerRadius(10)
             .padding()
@@ -46,14 +47,14 @@ struct LearnOptionsView: View {
     }
 }
 
-struct TagButton: View {
-    let tag: Tag
+struct CategoryButton: View {
+    let category: Category
     let isSelected: Bool
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Text(tag.name)
+            Text(category.name)
                 .padding()
                 .frame(minWidth: 100)
                 .background(isSelected ? Color.blue : Color.gray)

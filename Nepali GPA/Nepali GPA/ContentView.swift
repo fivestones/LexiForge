@@ -3,14 +3,16 @@ import SwiftData
 
 struct ContentView: View {
     @EnvironmentObject private var learningViewModel: LearningViewModel
+    @StateObject private var networkConfig = NetworkConfig()
     @State private var selectedTab = 0
     @State var currentView: CurrentView = .ControlView
     
     var body: some View {
         switch currentView {
-        case CurrentView.ControlView:
+        case .ControlView:
             ControlView(currentView: $currentView)
-        case CurrentView.LearnSetView:
+                .environmentObject(networkConfig)
+        case .LearnSetView:
             LearnSetView(currentView: $currentView)
         }
     }
@@ -18,7 +20,6 @@ struct ContentView: View {
 
 struct ControlView: View {
     @Binding var currentView: CurrentView
-    
     @EnvironmentObject private var learningViewModel: LearningViewModel
     @State private var selectedTab = 0
     
@@ -30,32 +31,30 @@ struct ControlView: View {
                 }
                 .tag(0)
 
-            ObjectListView(/*sort: SortDescriptor(\LearningObject.name), */)
+            ObjectListView()
                 .tabItem {
                     Label("Objects", systemImage: "list.bullet")
                 }
                 .tag(1)
 
-            TagListView()
+            CategoryListView()
                 .tabItem {
                     Label("Tags", systemImage: "tag.fill")
                 }
                 .tag(2)
+            
+            RemoteSetView()
+                .tabItem {
+                    Label("Remote Sets", systemImage: "cloud.fill")
+                }
+                .tag(3)
 
             SettingsView()
                 .tabItem {
                     Label("Settings", systemImage: "gear")
                 }
-                .tag(3)
+                .tag(4)
         }
-    }
-}
-
-// Placeholder view for Settings
-struct SettingsView: View {
-    var body: some View {
-        Text("Settings View")
-            .font(.largeTitle)
     }
 }
 
@@ -71,7 +70,7 @@ struct ContentView_Previews: PreviewProvider {
 // Convenience preview container
 let previewContainer: ModelContainer = {
     do {
-        let container = try ModelContainer(for: LearningObject.self, GenericAudioFile.self, Tag.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        let container = try ModelContainer(for: LearningObject.self, GenericAudioFile.self, Category.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
         return container
     } catch {
         fatalError("Failed to create preview container: \(error.localizedDescription)")
